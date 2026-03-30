@@ -290,7 +290,12 @@ function ControlFactory:createToggle(options)
         self.save()
     end
 
-    self.controls[flag] = {Set = function(_, v) update(v) end}
+    local flagObj = {
+        GetValue = function() return state end,
+        SetValue = function(_, v) update(v) end
+    }
+    self.controls[flag] = flagObj
+
     local connection = btn.MouseButton1Click:Connect(function() update(not state) end)
     if state then pcall(options.Callback, state) end
 
@@ -436,15 +441,26 @@ function ControlFactory:createSlider(options)
         end
     end)
 
-    self.registerControl(flag,
-        function() return val end,
-        function(v)
+    local flagObj = {
+        GetValue = function() return val end,
+        SetValue = function(_, v)
+            v = math.clamp(v, options.Range[1], options.Range[2])
+            if options.Increment then
+                v = math.floor(v / options.Increment + 0.5) * options.Increment
+            end
             val = v
             valLabel.Text = tostring(v)
             numInput.Text = tostring(v)
             fill.Size = UDim2.new((v - options.Range[1]) / (options.Range[2] - options.Range[1]), 0, 1, 0)
             pcall(options.Callback, v)
-        end,
+            self.save()
+        end
+    }
+    self.controls[flag] = flagObj
+
+    self.registerControl(flag,
+        function() return val end,
+        function(v) flagObj.SetValue(v) end,
         function(c)
             fill.BackgroundColor3 = c
             thumb.BackgroundColor3 = c
@@ -557,17 +573,16 @@ function ControlFactory:createDropdown(options)
         end
     end)
 
-    self.registerControl(flag,
-        function() return current end,
-        function(v)
-            current = v
-            updateButtonText()
-            pcall(options.Callback, v)
+    local flagObj = {
+        GetValue = function() return current end,
+        SetValue = function(_, v)
+            if table.find(optionsList, v) then
+                current = v
+                updateButtonText()
+                pcall(options.Callback, v)
+                self.save()
+            end
         end,
-        function(c) container.ScrollBarImageColor3 = c end
-    )
-
-    return {
         SetOptions = function(_, newOpts)
             optionsList = newOpts
             rebuild()
@@ -576,17 +591,17 @@ function ControlFactory:createDropdown(options)
                 updateButtonText()
                 pcall(options.Callback, "")
             end
-        end,
-        SetValue = function(_, val)
-            if table.find(optionsList, val) or val == "" then
-                current = val
-                updateButtonText()
-                pcall(options.Callback, val)
-                self.save()
-            end
-        end,
-        GetValue = function() return current end
-    }, connection
+        end
+    }
+    self.controls[flag] = flagObj
+
+    self.registerControl(flag,
+        function() return current end,
+        function(v) flagObj.SetValue(v) end,
+        function(c) container.ScrollBarImageColor3 = c end
+    )
+
+    return flagObj, connection
 end
 
 function ControlFactory:createChecklist(options)
@@ -733,17 +748,18 @@ function ControlFactory:createChecklist(options)
         end
     end)
 
-    self.registerControl(flag,
-        function()
+    local flagObj = {
+        GetValue = function()
             local result = {}
             for k, v in pairs(selected) do if v then table.insert(result, k) end end
             return result
         end,
-        function(v) selected = {}; for _,x in ipairs(v) do selected[x] = true end rebuild() end,
-        function(c) container.ScrollBarImageColor3 = c countLabel.TextColor3 = c end
-    )
-
-    return {
+        SetValue = function(_, tbl)
+            selected = {}
+            for _, x in ipairs(tbl) do selected[x] = true end
+            rebuild()
+            self.save()
+        end,
         SetOptions = function(_, newOpts)
             optionsList = newOpts
             selected = {}
@@ -759,7 +775,16 @@ function ControlFactory:createChecklist(options)
             for _, v in ipairs(tbl) do selected[v] = true end
             rebuild()
         end
-    }, connection
+    }
+    self.controls[flag] = flagObj
+
+    self.registerControl(flag,
+        function() return flagObj.GetValue() end,
+        function(v) flagObj.SetValue(v) end,
+        function(c) container.ScrollBarImageColor3 = c countLabel.TextColor3 = c end
+    )
+
+    return flagObj, connection
 end
 
 function ControlFactory:createTextInput(options)
@@ -801,12 +826,18 @@ function ControlFactory:createTextInput(options)
         self.save()
     end)
 
+    local flagObj = {
+        GetValue = function() return input.Text end,
+        SetValue = function(_, v) input.Text = v end
+    }
+    self.controls[flag] = flagObj
+
     self.registerControl(flag,
         function() return input.Text end,
         function(v) input.Text = v end,
         function() end
     )
-    return frame, connection
+    return flagObj, connection
 end
 
 function ControlFactory:createNumberInput(options)
@@ -858,12 +889,18 @@ function ControlFactory:createNumberInput(options)
         end
     end)
 
+    local flagObj = {
+        GetValue = function() return currentVal end,
+        SetValue = function(_, v) currentVal = tonumber(v) or 0; input.Text = tostring(currentVal); pcall(options.Callback, currentVal); self.save() end
+    }
+    self.controls[flag] = flagObj
+
     self.registerControl(flag,
         function() return currentVal end,
-        function(v) currentVal = tonumber(v) or 0; input.Text = tostring(currentVal) end,
+        function(v) flagObj.SetValue(v) end,
         function() end
     )
-    return frame, connection
+    return flagObj, connection
 end
 
 function ControlFactory:createKeybind(options)
@@ -925,12 +962,18 @@ function ControlFactory:createKeybind(options)
         end
     end)
 
+    local flagObj = {
+        GetValue = function() return current end,
+        SetValue = function(_, v) current = v; bindBtn.Text = v; pcall(options.Callback, v); self.save() end
+    }
+    self.controls[flag] = flagObj
+
     self.registerControl(flag,
         function() return current end,
-        function(v) current = v; bindBtn.Text = v end,
+        function(v) flagObj.SetValue(v) end,
         function(c) bindBtn.TextColor3 = c end
     )
-    return frame, {connection1, connection2}
+    return flagObj, {connection1, connection2}
 end
 
 function ControlFactory:createColorPicker(options)
@@ -1056,12 +1099,21 @@ function ControlFactory:createColorPicker(options)
         createTween(frame, 0.28, {Size = UDim2.new(1, 0, 0, isOpen and self.theme.ColorPickerExpandedHeight or self.theme.ColorPickerHeight)})
     end)
 
+    local flagObj = {
+        GetValue = function() return Color3.new(r, g, b) end,
+        SetValue = function(_, newColor)
+            r, g, b = newColor.R, newColor.G, newColor.B
+            update()
+        end
+    }
+    self.controls[flag] = flagObj
+
     self.registerControl(flag,
         function() return {r, g, b} end,
         function(v) r, g, b = v[1], v[2], v[3]; update() end,
         function() end
     )
-    return frame, connection
+    return flagObj, connection
 end
 
 function ControlFactory:createRadioGroup(options)
@@ -1141,24 +1193,31 @@ function ControlFactory:createRadioGroup(options)
         table.insert(radioButtons, {Option = opt, Inner = inner})
     end
 
-    self.registerControl(flag,
-        function() return selected end,
-        function(v)
+    local flagObj = {
+        GetValue = function() return selected end,
+        SetValue = function(_, v)
             if table.find(options.Options, v) then
                 selected = v
                 for _, rb in ipairs(radioButtons) do
                     rb.Inner.BackgroundColor3 = (rb.Option == selected) and self.theme.Accent or Color3.fromRGB(60,60,60)
                 end
                 pcall(options.Callback, selected)
+                self.save()
             end
-        end,
+        end
+    }
+    self.controls[flag] = flagObj
+
+    self.registerControl(flag,
+        function() return selected end,
+        function(v) flagObj.SetValue(v) end,
         function(c)
             for _, rb in ipairs(radioButtons) do
                 if rb.Option == selected then rb.Inner.BackgroundColor3 = c end
             end
         end
     )
-    return frame, nil
+    return flagObj, nil
 end
 
 function SynergyUI:CreateWindow(options)
