@@ -374,6 +374,7 @@ function ControlFactory:createSlider(options)
     local numInput = Instance.new("TextBox")
     numInput.Parent = inputBg
     numInput.BackgroundTransparency = 1
+    numInput.ClearTextOnFocus = false
     numInput.Size = UDim2.new(1, 0, 1, 0)
     numInput.Font = self.theme.Font
     numInput.Text = tostring(val)
@@ -501,7 +502,7 @@ function ControlFactory:createDropdown(options)
     icon.Position = UDim2.new(1, -34, 0.5, -8)
     icon.Size = UDim2.new(0, 20, 0, 20)
     icon.Font = Enum.Font.GothamBold
-    icon.Text = "▼"
+    icon.Text = "v"
     icon.TextColor3 = self.theme.TextMuted
     icon.TextSize = 14
 
@@ -548,7 +549,7 @@ function ControlFactory:createDropdown(options)
                 isOpen = false
                 createTween(frame, 0.25, {Size = UDim2.new(1, 0, 0, self.theme.DropdownHeight)})
                 container.Size = UDim2.new(1, 0, 0, 0)
-                icon.Text = "▼"
+                icon.Text = "v"
                 pcall(options.Callback, opt)
                 self.save()
             end)
@@ -565,11 +566,11 @@ function ControlFactory:createDropdown(options)
             local targetHeight = self.theme.DropdownHeight + expandedHeight
             createTween(frame, 0.25, {Size = UDim2.new(1, 0, 0, targetHeight)})
             container.Size = UDim2.new(1, 0, 0, expandedHeight)
-            icon.Text = "▲"
+            icon.Text = "^"
         else
             createTween(frame, 0.25, {Size = UDim2.new(1, 0, 0, self.theme.DropdownHeight)})
             container.Size = UDim2.new(1, 0, 0, 0)
-            icon.Text = "▼"
+            icon.Text = "v"
         end
     end)
 
@@ -648,7 +649,7 @@ function ControlFactory:createChecklist(options)
     icon.Position = UDim2.new(1, -34, 0.5, -8)
     icon.Size = UDim2.new(0, 20, 0, 20)
     icon.Font = Enum.Font.GothamBold
-    icon.Text = "▼"
+    icon.Text = "v"
     icon.TextColor3 = self.theme.TextMuted
     icon.TextSize = 14
 
@@ -740,11 +741,11 @@ function ControlFactory:createChecklist(options)
             local targetHeight = self.theme.ChecklistHeight + expandedHeight
             createTween(frame, 0.25, {Size = UDim2.new(1, 0, 0, targetHeight)})
             container.Size = UDim2.new(1, 0, 0, expandedHeight)
-            icon.Text = "▲"
+            icon.Text = "^"
         else
             createTween(frame, 0.25, {Size = UDim2.new(1, 0, 0, self.theme.ChecklistHeight)})
             container.Size = UDim2.new(1, 0, 0, 0)
-            icon.Text = "▼"
+            icon.Text = "v"
         end
     end)
 
@@ -811,6 +812,7 @@ function ControlFactory:createTextInput(options)
     local input = Instance.new("TextBox")
     input.Parent = frame
     input.BackgroundColor3 = self.theme.ElementDark
+    input.ClearTextOnFocus = false
     input.Position = UDim2.new(0, self.theme.PaddingHorizontal, 0, self.theme.PaddingVertical + self.theme.TextSizeNormal + 10)
     input.Size = UDim2.new(1, -2 * self.theme.PaddingHorizontal, 0, self.theme.TextInputFieldHeight)
     input.Font = self.theme.Font
@@ -818,8 +820,15 @@ function ControlFactory:createTextInput(options)
     input.TextColor3 = self.theme.Text
     input.TextSize = self.theme.TextSizeSmall
     input.PlaceholderText = options.Placeholder or ""
+    input.PlaceholderColor3 = self.theme.TextMuted
+    input.TextXAlignment = Enum.TextXAlignment.Left
     addCorner(input, self.theme.CornerRadius)
     addStroke(input, self.theme.StrokeColor)
+
+    local inputPad = Instance.new("UIPadding")
+    inputPad.Parent = input
+    inputPad.PaddingLeft = UDim.new(0, 10)
+    inputPad.PaddingRight = UDim.new(0, 10)
 
     local connection = input.FocusLost:Connect(function()
         pcall(options.Callback, input.Text)
@@ -865,14 +874,22 @@ function ControlFactory:createNumberInput(options)
     local input = Instance.new("TextBox")
     input.Parent = frame
     input.BackgroundColor3 = self.theme.ElementDark
+    input.ClearTextOnFocus = false
     input.Position = UDim2.new(0, self.theme.PaddingHorizontal, 0, self.theme.PaddingVertical + self.theme.TextSizeNormal + 10)
     input.Size = UDim2.new(1, -2 * self.theme.PaddingHorizontal, 0, self.theme.TextInputFieldHeight)
     input.Font = self.theme.Font
     input.Text = tostring(currentVal)
     input.TextColor3 = self.theme.Text
     input.TextSize = self.theme.TextSizeSmall
+    input.PlaceholderColor3 = self.theme.TextMuted
+    input.TextXAlignment = Enum.TextXAlignment.Left
     addCorner(input, self.theme.CornerRadius)
     addStroke(input, self.theme.StrokeColor)
+
+    local inputPad = Instance.new("UIPadding")
+    inputPad.Parent = input
+    inputPad.PaddingLeft = UDim.new(0, 10)
+    inputPad.PaddingRight = UDim.new(0, 10)
 
     input:GetPropertyChangedSignal("Text"):Connect(function()
         input.Text = input.Text:gsub("[^%d%.%-]", "")
@@ -1255,8 +1272,8 @@ function SynergyUI:CreateWindow(options)
             DropdownItemHeight = 32,
             ChecklistHeight = 42,
             ChecklistItemHeight = 32,
-            TextInputHeight = 52,
-            TextInputFieldHeight = 32,
+            TextInputHeight = 76,
+            TextInputFieldHeight = 34,
             KeybindHeight = 42,
             KeybindWidth = 72,
             ColorPickerHeight = 42,
@@ -1300,6 +1317,14 @@ function SynergyUI:CreateWindow(options)
     addCorner(topBar, window.Theme.CornerRadius)
     topBar.ZIndex = 10
 
+    local topBarSep = Instance.new("Frame")
+    topBarSep.Parent = topBar
+    topBarSep.BackgroundColor3 = window.Theme.StrokeColor
+    topBarSep.BorderSizePixel = 0
+    topBarSep.Position = UDim2.new(0, 0, 1, -1)
+    topBarSep.Size = UDim2.new(1, 0, 0, 1)
+    topBarSep.ZIndex = 10
+
     local titleLabel = Instance.new("TextLabel")
     titleLabel.Parent = topBar
     titleLabel.BackgroundTransparency = 1
@@ -1321,24 +1346,43 @@ function SynergyUI:CreateWindow(options)
 
     local minBtn = Instance.new("TextButton")
     minBtn.Parent = controlContainer
-    minBtn.BackgroundTransparency = 1
-    minBtn.Size = UDim2.new(0.5, 0, 1, 0)
-    minBtn.Font = window.Theme.Font
-    minBtn.Text = "–"
-    minBtn.TextColor3 = window.Theme.Text
-    minBtn.TextSize = 22
+    minBtn.BackgroundColor3 = Color3.fromRGB(255, 180, 50)
+    minBtn.BackgroundTransparency = 0.72
+    minBtn.Position = UDim2.new(0, 14, 0.5, -10)
+    minBtn.Size = UDim2.new(0, 20, 0, 20)
+    minBtn.Font = Enum.Font.GothamBold
+    minBtn.Text = "-"
+    minBtn.TextColor3 = Color3.fromRGB(255, 210, 120)
+    minBtn.TextSize = 16
     minBtn.ZIndex = 10
+    addCorner(minBtn, 999)
+
+    minBtn.MouseEnter:Connect(function()
+        createTween(minBtn, 0.15, {BackgroundTransparency = 0.15})
+    end)
+    minBtn.MouseLeave:Connect(function()
+        createTween(minBtn, 0.15, {BackgroundTransparency = 0.72})
+    end)
 
     local closeBtn = Instance.new("TextButton")
     closeBtn.Parent = controlContainer
-    closeBtn.BackgroundTransparency = 1
-    closeBtn.Position = UDim2.new(0.5, 0, 0, 0)
-    closeBtn.Size = UDim2.new(0.5, 0, 1, 0)
-    closeBtn.Font = window.Theme.Font
-    closeBtn.Text = "✕"
-    closeBtn.TextColor3 = Color3.fromRGB(255, 85, 85)
-    closeBtn.TextSize = 18
+    closeBtn.BackgroundColor3 = Color3.fromRGB(255, 85, 85)
+    closeBtn.BackgroundTransparency = 0.72
+    closeBtn.Position = UDim2.new(0, 50, 0.5, -10)
+    closeBtn.Size = UDim2.new(0, 20, 0, 20)
+    closeBtn.Font = Enum.Font.GothamBold
+    closeBtn.Text = "X"
+    closeBtn.TextColor3 = Color3.fromRGB(255, 160, 160)
+    closeBtn.TextSize = 11
     closeBtn.ZIndex = 10
+    addCorner(closeBtn, 999)
+
+    closeBtn.MouseEnter:Connect(function()
+        createTween(closeBtn, 0.15, {BackgroundTransparency = 0.1})
+    end)
+    closeBtn.MouseLeave:Connect(function()
+        createTween(closeBtn, 0.15, {BackgroundTransparency = 0.72})
+    end)
 
     local sidebar = Instance.new("Frame")
     sidebar.Name = "Sidebar"
@@ -1356,6 +1400,10 @@ function SynergyUI:CreateWindow(options)
     sidebarLayout.SortOrder = Enum.SortOrder.LayoutOrder
     sidebarLayout.Padding = UDim.new(0, 2)
 
+    local sidebarPad = Instance.new("UIPadding")
+    sidebarPad.Parent = sidebar
+    sidebarPad.PaddingTop = UDim.new(0, 6)
+
     local contentArea = Instance.new("Frame")
     contentArea.Name = "ContentArea"
     contentArea.Parent = mainFrame
@@ -1367,22 +1415,37 @@ function SynergyUI:CreateWindow(options)
     addCorner(contentArea, window.Theme.CornerRadius)
     contentArea.ClipsDescendants = true
 
-    local resizeGrip = Instance.new("TextButton")
-    resizeGrip.Name = "ResizeGrip"
-    resizeGrip.Parent = mainFrame
-    resizeGrip.BackgroundTransparency = 1
-    resizeGrip.Position = UDim2.new(1, -24 - strokeThickness, 1, -24 - strokeThickness)
-    resizeGrip.Size = UDim2.new(0, 20, 0, 20)
-    resizeGrip.Text = "◢"
-    resizeGrip.TextColor3 = window.Theme.TextMuted
-    resizeGrip.TextSize = 16
-    resizeGrip.ZIndex = 20
-    addCorner(resizeGrip, 4)
-
     local function addConnection(conn)
         table.insert(window.Connections, conn)
         return conn
     end
+
+    local resizeHandle = Instance.new("Frame")
+    resizeHandle.Name = "ResizeHandle"
+    resizeHandle.Parent = gui
+    resizeHandle.BackgroundColor3 = window.Theme.Accent
+    resizeHandle.BackgroundTransparency = 0.45
+    resizeHandle.BorderSizePixel = 0
+    resizeHandle.Size = UDim2.new(0, 5, 0, 54)
+    resizeHandle.ZIndex = 150
+    addCorner(resizeHandle, 999)
+
+    local function syncResizeHandle()
+        local ap = mainFrame.AbsolutePosition
+        local as = mainFrame.AbsoluteSize
+        resizeHandle.Position = UDim2.new(0, ap.X + as.X + 18, 0, ap.Y + as.Y / 2 - 27)
+    end
+
+    addConnection(mainFrame:GetPropertyChangedSignal("AbsolutePosition"):Connect(syncResizeHandle))
+    addConnection(mainFrame:GetPropertyChangedSignal("AbsoluteSize"):Connect(syncResizeHandle))
+    task.defer(syncResizeHandle)
+
+    resizeHandle.MouseEnter:Connect(function()
+        createTween(resizeHandle, 0.18, {BackgroundTransparency = 0.1, Size = UDim2.new(0, 7, 0, 54)})
+    end)
+    resizeHandle.MouseLeave:Connect(function()
+        createTween(resizeHandle, 0.18, {BackgroundTransparency = 0.45, Size = UDim2.new(0, 5, 0, 54)})
+    end)
 
     local dragging = false
     local dragStart, startPos
@@ -1409,7 +1472,7 @@ function SynergyUI:CreateWindow(options)
 
     local resizing = false
     local resizeStart, startSize
-    addConnection(resizeGrip.InputBegan:Connect(function(input)
+    addConnection(resizeHandle.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             resizing = true
             resizeStart = input.Position
@@ -1438,10 +1501,12 @@ function SynergyUI:CreateWindow(options)
             createTween(mainFrame, 0.35, {Size = UDim2.new(0, mainFrame.Size.X.Offset, 0, 42)})
             sidebar.Visible = false
             contentArea.Visible = false
+            resizeHandle.Visible = false
         else
             createTween(mainFrame, 0.35, {Size = UDim2.new(0, mainFrame.Size.X.Offset, 0, 380)})
             sidebar.Visible = true
             contentArea.Visible = true
+            resizeHandle.Visible = true
         end
     end))
 
@@ -1517,8 +1582,10 @@ function SynergyUI:CreateWindow(options)
         window.Theme.Accent = color
         mainFrame:FindFirstChild("UIStroke").Color = color
         titleLabel.TextColor3 = color
+        resizeHandle.BackgroundColor3 = color
         for _, tab in ipairs(window.Tabs) do
             if tab.Button.TextColor3 ~= window.Theme.TextMuted then tab.Button.TextColor3 = color end
+            if tab.ActiveIndicator then tab.ActiveIndicator.BackgroundColor3 = color end
         end
         for _, control in ipairs(window.Controls) do
             if control.UpdateTheme then control.UpdateTheme(color) end
@@ -1543,7 +1610,16 @@ function SynergyUI:CreateWindow(options)
         tabBtn.TextColor3 = window.Theme.TextMuted
         tabBtn.TextSize = 14
         tabBtn.TextXAlignment = Enum.TextXAlignment.Left
-        tabBtn.Position = UDim2.new(0, window.Theme.PaddingHorizontal, 0, 0)
+        tabBtn.Position = UDim2.new(0, window.Theme.PaddingHorizontal + 10, 0, 0)
+
+        local activeIndicator = Instance.new("Frame")
+        activeIndicator.Parent = tabBtn
+        activeIndicator.BackgroundColor3 = window.Theme.Accent
+        activeIndicator.BorderSizePixel = 0
+        activeIndicator.Position = UDim2.new(0, -window.Theme.PaddingHorizontal - 10, 0.15, 0)
+        activeIndicator.Size = UDim2.new(0, 3, 0.7, 0)
+        activeIndicator.Visible = false
+        addCorner(activeIndicator, 999)
 
         if icon then
             local iconLabel = Instance.new("ImageLabel")
@@ -1556,6 +1632,8 @@ function SynergyUI:CreateWindow(options)
             tabBtn.Text = "      " .. name
         else
             tabBtn.TextXAlignment = Enum.TextXAlignment.Center
+            tabBtn.Position = UDim2.new(0, 0, 0, 0)
+            activeIndicator.Position = UDim2.new(0, 0, 0.15, 0)
         end
 
         local scrollFrame = Instance.new("ScrollingFrame")
@@ -1586,11 +1664,12 @@ function SynergyUI:CreateWindow(options)
             scrollFrame.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + window.Theme.PaddingVertical * 2)
         end))
 
-        local tabData = {Button = tabBtn, Content = scrollFrame}
+        local tabData = {Button = tabBtn, Content = scrollFrame, ActiveIndicator = activeIndicator}
         table.insert(window.Tabs, tabData)
 
         if #window.Tabs == 1 then
             tabBtn.TextColor3 = window.Theme.Accent
+            activeIndicator.Visible = true
             window.CurrentTab = scrollFrame
         end
 
@@ -1598,8 +1677,10 @@ function SynergyUI:CreateWindow(options)
             for _, t in ipairs(window.Tabs) do
                 t.Button.TextColor3 = window.Theme.TextMuted
                 t.Content.Visible = false
+                if t.ActiveIndicator then t.ActiveIndicator.Visible = false end
             end
             tabBtn.TextColor3 = window.Theme.Accent
+            activeIndicator.Visible = true
             scrollFrame.Visible = true
             window.CurrentTab = scrollFrame
         end))
