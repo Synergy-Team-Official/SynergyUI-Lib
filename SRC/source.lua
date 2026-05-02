@@ -1267,7 +1267,7 @@ function SynergyUI:CreateWindow(options)
     sidebarScroller.ScrollBarThickness = 4
     sidebarScroller.ScrollBarImageColor3 = window.Theme.Accent
     sidebarScroller.CanvasSize = UDim2.new(0, 0, 0, 0)
-    sidebarScroller.TouchScrollingEnabled = true
+    sidebarScroller.TouchScrollEnabled = true
     sidebarScroller.AutomaticCanvasSize = Enum.AutomaticSize.Y
     local sidebarLayout = Instance.new("UIListLayout")
     sidebarLayout.Parent = sidebarScroller
