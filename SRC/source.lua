@@ -7,7 +7,6 @@ local UserInputService = game:GetService("UserInputService")
 local CoreGui = game:GetService("CoreGui")
 local HttpService = game:GetService("HttpService")
 local TextService = game:GetService("TextService")
-local Http = game:GetService("HttpService")
 
 local function getDefaultParent()
     if RunService:IsStudio() then
@@ -58,6 +57,35 @@ local function addHoverEffect(button, originalColor, hoverColor, useScale)
         createTween(button, 0.18, {BackgroundColor3 = originalColor})
         if scale then createTween(scale, 0.18, {Scale = 1}) end
     end)
+end
+
+local function httpGetText(url)
+    local success, result = false, nil
+    if request then
+        success, result = pcall(function()
+            local response = request({Url = url, Method = "GET"})
+            return response.Body
+        end)
+        if success then return result end
+    end
+    if syn and syn.request then
+        success, result = pcall(function()
+            local response = syn.request({Url = url, Method = "GET"})
+            return response.Body
+        end)
+        if success then return result end
+    end
+    if http_request then
+        success, result = pcall(function()
+            local response = http_request({Url = url, Method = "GET"})
+            return response.Body
+        end)
+        if success then return result end
+    end
+    success, result = pcall(function()
+        return game:GetService("HttpService"):RequestAsync({Url = url, Method = "GET"}).Body
+    end)
+    return success and result or nil
 end
 
 local NotificationQueue = {}
@@ -1540,11 +1568,9 @@ function SynergyUI:CreateWindow(options)
     if options.IconSet then
         local baseUrl = "https://raw.githubusercontent.com/Synergy-Team-Official/SynergyUI-Lib/refs/heads/main/Icons/"
         local iconUrl = baseUrl .. options.IconSet .. "/dist/Icons.lua"
-        local success, result = pcall(function()
-            return Http:GetAsync(iconUrl)
-        end)
-        if success then
-            local loadFunc = loadstring(result)
+        local iconData = httpGetText(iconUrl)
+        if iconData then
+            local loadFunc = loadstring(iconData)
             if loadFunc then
                 local loadedMap = loadFunc()
                 if type(loadedMap) == "table" then
@@ -1552,7 +1578,7 @@ function SynergyUI:CreateWindow(options)
                 end
             end
         else
-            warn("Failed to load icon set: " .. options.IconSet)
+            warn("Failed to load icon set, using fallback icons")
         end
     end
 
