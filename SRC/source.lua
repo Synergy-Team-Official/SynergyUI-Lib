@@ -107,7 +107,7 @@ local function showNextNotification()
     frame.BorderSizePixel = 0
     frame.Size = UDim2.new(0, 290, 0, 68)
     addCorner(frame, 14)
-    addStroke(frame, Color3.fromRGB(255, 255, 255), 1, 0.92)
+    addStroke(frame, Color3.fromRGB(255,255,255), 1, 0.92)
 
     local pos = notification.Position or "TopRight"
     if pos == "TopRight" then
@@ -223,7 +223,7 @@ function ControlFactory:createButton(options)
     btn.TextColor3 = self.theme.Text
     btn.TextSize = self.theme.TextSizeNormal
 
-    addHoverEffect(frame, self.theme.Element, self.theme.HoverColor, false)
+    addHoverEffect(btn, self.theme.Element, self.theme.HoverColor, true)
 
     local connection = btn.MouseButton1Click:Connect(function()
         local s, e = pcall(options.Callback)
@@ -287,19 +287,18 @@ function ControlFactory:createToggle(options)
     label.TextSize = self.theme.TextSizeNormal
     label.TextXAlignment = Enum.TextXAlignment.Left
 
-    local outerH = self.theme.ToggleHeight - 8
     local outer = Instance.new("Frame")
     outer.Parent = frame
     outer.BackgroundColor3 = self.theme.ElementDark
-    outer.Position = UDim2.new(1, -self.theme.ToggleWidth - self.theme.PaddingHorizontal, 0.5, -outerH / 2)
-    outer.Size = UDim2.new(0, self.theme.ToggleWidth, 0, outerH)
+    outer.Position = UDim2.new(1, -self.theme.ToggleWidth - self.theme.PaddingHorizontal, 0.5, -self.theme.ToggleHeight/2 + 1)
+    outer.Size = UDim2.new(0, self.theme.ToggleWidth, 0, self.theme.ToggleHeight - 8)
     addCorner(outer, 999)
 
     local inner = Instance.new("Frame")
     inner.Parent = outer
     inner.BackgroundColor3 = state and self.theme.Accent or self.theme.TextMuted
     local innerSize = self.theme.ToggleHeight - 16
-    inner.Position = state and UDim2.new(1, -innerSize - 4, 0.5, -innerSize / 2) or UDim2.new(0, 4, 0.5, -innerSize / 2)
+    inner.Position = state and UDim2.new(1, -innerSize - 4, 0.5, -innerSize/2) or UDim2.new(0, 4, 0.5, -innerSize/2)
     inner.Size = UDim2.new(0, innerSize, 0, innerSize)
     addCorner(inner, 999)
 
@@ -312,7 +311,7 @@ function ControlFactory:createToggle(options)
     local function update(val)
         state = val
         createTween(inner, 0.25, {
-            Position = state and UDim2.new(1, -innerSize - 4, 0.5, -innerSize / 2) or UDim2.new(0, 4, 0.5, -innerSize / 2),
+            Position = state and UDim2.new(1, -innerSize - 4, 0.5, -innerSize/2) or UDim2.new(0, 4, 0.5, -innerSize/2),
             BackgroundColor3 = state and self.theme.Accent or self.theme.TextMuted
         })
         label.TextColor3 = state and self.theme.Accent or self.theme.Text
@@ -339,6 +338,7 @@ function ControlFactory:createToggle(options)
 end
 
 function ControlFactory:createSlider(options)
+    if options.Range[1] == options.Range[2] then return end
     local val = options.CurrentValue or options.Range[1]
     local flag = options.Flag or options.Name
 
@@ -375,7 +375,7 @@ function ControlFactory:createSlider(options)
     bg.Parent = frame
     bg.BackgroundColor3 = self.theme.ElementDark
     bg.Position = UDim2.new(0, self.theme.PaddingHorizontal, 0, self.theme.PaddingVertical + self.theme.TextSizeNormal + 8)
-    bg.Size = UDim2.new(1, -(2 * self.theme.PaddingHorizontal + 78), 0, self.theme.SliderBarHeight)
+    bg.Size = UDim2.new(1, -2 * self.theme.PaddingHorizontal - 130, 0, self.theme.SliderBarHeight)
     addCorner(bg, self.theme.SliderBarHeight / 2)
     addStroke(bg, self.theme.StrokeColor, 1, 0.9)
 
@@ -391,7 +391,7 @@ function ControlFactory:createSlider(options)
     thumb.Position = UDim2.new(1, -8, 0.5, -8)
     thumb.Size = UDim2.new(0, 16, 0, 16)
     addCorner(thumb, 999)
-    addStroke(thumb, Color3.fromRGB(255, 255, 255), 1.5, 0.4)
+    addStroke(thumb, Color3.fromRGB(255,255,255), 1.5, 0.4)
 
     local inputBg = Instance.new("Frame")
     inputBg.Parent = frame
@@ -491,7 +491,7 @@ function ControlFactory:createSlider(options)
 
     self.registerControl(flag,
         function() return val end,
-        function(v) flagObj:SetValue(v) end,
+        function(v) flagObj.SetValue(v) end,
         function(c)
             fill.BackgroundColor3 = c
             thumb.BackgroundColor3 = c
@@ -628,7 +628,7 @@ function ControlFactory:createDropdown(options)
 
     self.registerControl(flag,
         function() return current end,
-        function(v) flagObj:SetValue(v) end,
+        function(v) flagObj.SetValue(v) end,
         function(c) container.ScrollBarImageColor3 = c end
     )
 
@@ -665,7 +665,7 @@ function ControlFactory:createChecklist(options)
     local countLabel = Instance.new("TextLabel")
     countLabel.Parent = frame
     countLabel.BackgroundTransparency = 1
-    countLabel.Position = UDim2.new(1, -100, 0.5, -10)
+    countLabel.Position = UDim2.new(1, -80, 0.5, -10)
     countLabel.Size = UDim2.new(0, 60, 0, 20)
     countLabel.Font = self.theme.Font
     countLabel.Text = "0 selected"
@@ -727,7 +727,7 @@ function ControlFactory:createChecklist(options)
 
             local toggleInner = Instance.new("Frame")
             toggleInner.Parent = toggleOuter
-            toggleInner.BackgroundColor3 = selected[opt] and self.theme.Accent or Color3.fromRGB(60, 60, 60)
+            toggleInner.BackgroundColor3 = selected[opt] and self.theme.Accent or Color3.fromRGB(60,60,60)
             toggleInner.Position = selected[opt] and UDim2.new(0.5, -6, 0.5, -6) or UDim2.new(0, 3, 0.5, -6)
             toggleInner.Size = UDim2.new(0, 12, 0, 12)
             addCorner(toggleInner, 6)
@@ -752,7 +752,7 @@ function ControlFactory:createChecklist(options)
             clickBtn.MouseButton1Click:Connect(function()
                 selected[opt] = not selected[opt]
                 createTween(toggleInner, 0.2, {
-                    BackgroundColor3 = selected[opt] and self.theme.Accent or Color3.fromRGB(60, 60, 60),
+                    BackgroundColor3 = selected[opt] and self.theme.Accent or Color3.fromRGB(60,60,60),
                     Position = selected[opt] and UDim2.new(0.5, -6, 0.5, -6) or UDim2.new(0, 3, 0.5, -6)
                 })
                 updateSelectedCount()
@@ -810,9 +810,9 @@ function ControlFactory:createChecklist(options)
     self.controls[flag] = flagObj
 
     self.registerControl(flag,
-        function() return flagObj:GetValue() end,
-        function(v) flagObj:SetValue(v) end,
-        function(c) container.ScrollBarImageColor3 = c; countLabel.TextColor3 = c end
+        function() return flagObj.GetValue() end,
+        function(v) flagObj.SetValue(v) end,
+        function(c) container.ScrollBarImageColor3 = c countLabel.TextColor3 = c end
     )
 
     return flagObj, connection
@@ -938,18 +938,13 @@ function ControlFactory:createNumberInput(options)
 
     local flagObj = {
         GetValue = function() return currentVal end,
-        SetValue = function(_, v)
-            currentVal = tonumber(v) or 0
-            input.Text = tostring(currentVal)
-            pcall(options.Callback, currentVal)
-            self.save()
-        end
+        SetValue = function(_, v) currentVal = tonumber(v) or 0; input.Text = tostring(currentVal); pcall(options.Callback, currentVal); self.save() end
     }
     self.controls[flag] = flagObj
 
     self.registerControl(flag,
         function() return currentVal end,
-        function(v) flagObj:SetValue(v) end,
+        function(v) flagObj.SetValue(v) end,
         function() end
     )
     return flagObj, connection
@@ -977,12 +972,11 @@ function ControlFactory:createKeybind(options)
     label.TextSize = self.theme.TextSizeNormal
     label.TextXAlignment = Enum.TextXAlignment.Left
 
-    local kbBtnH = self.theme.KeybindHeight - 14
     local bindBtn = Instance.new("TextButton")
     bindBtn.Parent = frame
     bindBtn.BackgroundColor3 = self.theme.ElementDark
-    bindBtn.Position = UDim2.new(1, -self.theme.KeybindWidth - self.theme.PaddingHorizontal, 0.5, -kbBtnH / 2)
-    bindBtn.Size = UDim2.new(0, self.theme.KeybindWidth, 0, kbBtnH)
+    bindBtn.Position = UDim2.new(1, -self.theme.KeybindWidth - self.theme.PaddingHorizontal, 0.5, -self.theme.KeybindHeight/2)
+    bindBtn.Size = UDim2.new(0, self.theme.KeybindWidth, 0, self.theme.KeybindHeight)
     bindBtn.Font = self.theme.Font
     bindBtn.Text = current
     bindBtn.TextColor3 = self.theme.Accent
@@ -1017,18 +1011,13 @@ function ControlFactory:createKeybind(options)
 
     local flagObj = {
         GetValue = function() return current end,
-        SetValue = function(_, v)
-            current = v
-            bindBtn.Text = v
-            pcall(options.Callback, v)
-            self.save()
-        end
+        SetValue = function(_, v) current = v; bindBtn.Text = v; pcall(options.Callback, v); self.save() end
     }
     self.controls[flag] = flagObj
 
     self.registerControl(flag,
         function() return current end,
-        function(v) flagObj:SetValue(v) end,
+        function(v) flagObj.SetValue(v) end,
         function(c) bindBtn.TextColor3 = c end
     )
     return flagObj, {connection1, connection2}
@@ -1061,10 +1050,10 @@ function ControlFactory:createColorPicker(options)
     local preview = Instance.new("Frame")
     preview.Parent = frame
     preview.BackgroundColor3 = color
-    preview.Position = UDim2.new(1, -self.theme.ColorPickerPreviewSize - self.theme.PaddingHorizontal, 0.5, -self.theme.ColorPickerPreviewSize / 2)
+    preview.Position = UDim2.new(1, -self.theme.ColorPickerPreviewSize - self.theme.PaddingHorizontal, 0.5, -self.theme.ColorPickerPreviewSize/2)
     preview.Size = UDim2.new(0, self.theme.ColorPickerPreviewSize, 0, self.theme.ColorPickerPreviewSize)
     addCorner(preview, self.theme.CornerRadius)
-    addStroke(preview, Color3.fromRGB(255, 255, 255), 1.5, 0.6)
+    addStroke(preview, Color3.fromRGB(255,255,255), 1.5, 0.6)
 
     local btn = Instance.new("TextButton")
     btn.Parent = frame
@@ -1085,6 +1074,8 @@ function ControlFactory:createColorPicker(options)
         pcall(options.Callback, c)
         self.save()
     end
+
+    local sliders = {}
 
     local function makeSlider(name, yPos, tint, initVal, callback)
         local sFrame = Instance.new("Frame")
@@ -1144,11 +1135,16 @@ function ControlFactory:createColorPicker(options)
                 update()
             end
         end)
+
+        return sFill, function(val)
+            local pos = val
+            sFill.Size = UDim2.new(pos, 0, 1, 0)
+        end
     end
 
-    makeSlider("R", 12, Color3.fromRGB(255, 80, 80), r, function(v) r = v end)
-    makeSlider("G", 48, Color3.fromRGB(80, 255, 80), g, function(v) g = v end)
-    makeSlider("B", 84, Color3.fromRGB(80, 150, 255), b, function(v) b = v end)
+    local rFill, setR = makeSlider("R", 12, Color3.fromRGB(255, 80, 80), r, function(v) r = v end)
+    local gFill, setG = makeSlider("G", 48, Color3.fromRGB(80, 255, 80), g, function(v) g = v end)
+    local bFill, setB = makeSlider("B", 84, Color3.fromRGB(80, 150, 255), b, function(v) b = v end)
 
     local isOpen = false
     local connection = btn.MouseButton1Click:Connect(function()
@@ -1161,6 +1157,9 @@ function ControlFactory:createColorPicker(options)
         GetValue = function() return Color3.new(r, g, b) end,
         SetValue = function(_, newColor)
             r, g, b = newColor.R, newColor.G, newColor.B
+            setR(r)
+            setG(g)
+            setB(b)
             update()
         end
     }
@@ -1168,7 +1167,7 @@ function ControlFactory:createColorPicker(options)
 
     self.registerControl(flag,
         function() return {r, g, b} end,
-        function(v) r, g, b = v[1], v[2], v[3]; update() end,
+        function(v) r, g, b = v[1], v[2], v[3]; setR(r); setG(g); setB(b); update() end,
         function() end
     )
     return flagObj, connection
@@ -1202,7 +1201,7 @@ function ControlFactory:createRadioGroup(options)
         local row = Instance.new("Frame")
         row.Parent = frame
         row.BackgroundTransparency = 1
-        row.Position = UDim2.new(0, 0, 0, 30 + (i - 1) * self.theme.RadioItemHeight)
+        row.Position = UDim2.new(0, 0, 0, 30 + (i-1) * self.theme.RadioItemHeight)
         row.Size = UDim2.new(1, 0, 0, self.theme.RadioItemHeight)
 
         local outer = Instance.new("Frame")
@@ -1215,7 +1214,7 @@ function ControlFactory:createRadioGroup(options)
 
         local inner = Instance.new("Frame")
         inner.Parent = outer
-        inner.BackgroundColor3 = (opt == selected) and self.theme.Accent or Color3.fromRGB(60, 60, 60)
+        inner.BackgroundColor3 = (opt == selected) and self.theme.Accent or Color3.fromRGB(60,60,60)
         inner.Position = UDim2.new(0.5, -6, 0.5, -6)
         inner.Size = UDim2.new(0, 12, 0, 12)
         addCorner(inner, 999)
@@ -1241,7 +1240,7 @@ function ControlFactory:createRadioGroup(options)
             if opt ~= selected then
                 selected = opt
                 for _, rb in ipairs(radioButtons) do
-                    rb.Inner.BackgroundColor3 = (rb.Option == selected) and self.theme.Accent or Color3.fromRGB(60, 60, 60)
+                    rb.Inner.BackgroundColor3 = (rb.Option == selected) and self.theme.Accent or Color3.fromRGB(60,60,60)
                 end
                 pcall(options.Callback, selected)
                 self.save()
@@ -1257,7 +1256,7 @@ function ControlFactory:createRadioGroup(options)
             if table.find(options.Options, v) then
                 selected = v
                 for _, rb in ipairs(radioButtons) do
-                    rb.Inner.BackgroundColor3 = (rb.Option == selected) and self.theme.Accent or Color3.fromRGB(60, 60, 60)
+                    rb.Inner.BackgroundColor3 = (rb.Option == selected) and self.theme.Accent or Color3.fromRGB(60,60,60)
                 end
                 pcall(options.Callback, selected)
                 self.save()
@@ -1268,7 +1267,7 @@ function ControlFactory:createRadioGroup(options)
 
     self.registerControl(flag,
         function() return selected end,
-        function(v) flagObj:SetValue(v) end,
+        function(v) flagObj.SetValue(v) end,
         function(c)
             for _, rb in ipairs(radioButtons) do
                 if rb.Option == selected then rb.Inner.BackgroundColor3 = c end
@@ -1461,20 +1460,11 @@ function SynergyUI:CreateWindow(options)
     contentArea.Parent = mainFrame
     contentArea.BackgroundColor3 = window.Theme.Background
     contentArea.BorderSizePixel = 0
-    contentArea.Position = UDim2.new(0, 151, 0, 42)
-    contentArea.Size = UDim2.new(1, -151 - strokeThickness, 1, -42 - strokeThickness)
+    contentArea.Position = UDim2.new(0, 150, 0, 42)
+    contentArea.Size = UDim2.new(1, -150 - strokeThickness, 1, -42 - strokeThickness)
     contentArea.ZIndex = 1
     addCorner(contentArea, window.Theme.CornerRadius)
     contentArea.ClipsDescendants = true
-
-    local sidebarSep = Instance.new("Frame")
-    sidebarSep.Name = "SidebarSep"
-    sidebarSep.Parent = mainFrame
-    sidebarSep.BackgroundColor3 = window.Theme.StrokeColor
-    sidebarSep.BorderSizePixel = 0
-    sidebarSep.Position = UDim2.new(0, 150, 0, 42)
-    sidebarSep.Size = UDim2.new(0, 1, 1, -42 - strokeThickness)
-    sidebarSep.ZIndex = 6
 
     local function addConnection(conn)
         table.insert(window.Connections, conn)
@@ -1659,8 +1649,7 @@ function SynergyUI:CreateWindow(options)
 
     function window:SetAccent(color)
         window.Theme.Accent = color
-        local mainStroke = mainFrame:FindFirstChildOfClass("UIStroke")
-        if mainStroke then mainStroke.Color = color end
+        mainFrame:FindFirstChild("UIStroke").Color = color
         titleLabel.TextColor3 = color
         resizeHandle.BackgroundColor3 = color
         sidebar.ScrollBarImageColor3 = color
@@ -1692,37 +1681,33 @@ function SynergyUI:CreateWindow(options)
         tabBtn.BorderSizePixel = 0
         tabBtn.Size = UDim2.new(1, 0, 0, 42)
         tabBtn.Font = window.Theme.Font
-        tabBtn.Text = name
         tabBtn.TextColor3 = window.Theme.TextMuted
         tabBtn.TextSize = 14
         tabBtn.TextXAlignment = Enum.TextXAlignment.Left
-        tabBtn.Position = UDim2.new(0, 0, 0, 0)
 
         local activeIndicator = Instance.new("Frame")
         activeIndicator.Parent = tabBtn
         activeIndicator.BackgroundColor3 = window.Theme.Accent
         activeIndicator.BorderSizePixel = 0
-        activeIndicator.Position = UDim2.new(0, 0, 0.15, 0)
+        activeIndicator.Position = UDim2.new(0, -window.Theme.PaddingHorizontal - 10, 0.15, 0)
         activeIndicator.Size = UDim2.new(0, 3, 0.7, 0)
         activeIndicator.Visible = false
         addCorner(activeIndicator, 999)
 
         if iconAsset and iconAsset ~= "" then
-            local tabPad = Instance.new("UIPadding")
-            tabPad.Parent = tabBtn
-            tabPad.PaddingLeft = UDim.new(0, 44)
-
             local iconLabel = Instance.new("ImageLabel")
             iconLabel.Parent = tabBtn
             iconLabel.BackgroundTransparency = 1
-            iconLabel.Position = UDim2.new(0, 12, 0.5, -10)
+            iconLabel.Position = UDim2.new(0, 18, 0.5, -10)
             iconLabel.Size = UDim2.new(0, 20, 0, 20)
             iconLabel.Image = iconAsset
             iconLabel.ImageColor3 = window.Theme.TextMuted
+            tabBtn.Text = "          " .. name
+            tabBtn.Position = UDim2.new(0, 0, 0, 0)
         else
-            local tabPad = Instance.new("UIPadding")
-            tabPad.Parent = tabBtn
-            tabPad.PaddingLeft = UDim.new(0, window.Theme.PaddingHorizontal)
+            tabBtn.Text = name
+            tabBtn.Position = UDim2.new(0, window.Theme.PaddingHorizontal + 10, 0, 0)
+            activeIndicator.Position = UDim2.new(0, -window.Theme.PaddingHorizontal - 10, 0.15, 0)
         end
 
         local scrollFrame = Instance.new("ScrollingFrame")
