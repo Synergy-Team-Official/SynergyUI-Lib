@@ -7,6 +7,7 @@ local UserInputService = game:GetService("UserInputService")
 local CoreGui = game:GetService("CoreGui")
 local HttpService = game:GetService("HttpService")
 local TextService = game:GetService("TextService")
+local Http = game:GetService("HttpService")
 
 local function getDefaultParent()
     if RunService:IsStudio() then
@@ -670,7 +671,7 @@ function ControlFactory:createChecklist(options)
 
     local function updateSelectedCount()
         local count = 0
-        for _, v in pairs(selected) do if v then count += 1 end end
+        for _, v in pairs(selected) do if v then count = count + 1 end end
         countLabel.Text = count .. " selected"
         pcall(options.Callback, selected)
         self.save()
@@ -1535,6 +1536,26 @@ function SynergyUI:CreateWindow(options)
         end
     end))
 
+    local iconMap = {}
+    if options.IconSet then
+        local baseUrl = "https://raw.githubusercontent.com/Synergy-Team-Official/SynergyUI-Lib/refs/heads/main/Icons/"
+        local iconUrl = baseUrl .. options.IconSet .. "/dist/Icons.lua"
+        local success, result = pcall(function()
+            return Http:GetAsync(iconUrl)
+        end)
+        if success then
+            local loadFunc = loadstring(result)
+            if loadFunc then
+                local loadedMap = loadFunc()
+                if type(loadedMap) == "table" then
+                    iconMap = loadedMap
+                end
+            end
+        else
+            warn("Failed to load icon set: " .. options.IconSet)
+        end
+    end
+
     local function saveConfig()
         if window.ConfigFile == "" then return end
         local config = {
@@ -1612,6 +1633,11 @@ function SynergyUI:CreateWindow(options)
     end
 
     function window:CreateTab(name, icon)
+        local iconAsset = icon
+        if type(icon) == "string" and not icon:match("^rbxasset") and not icon:match("^http") then
+            iconAsset = iconMap[icon] or ""
+        end
+
         local tabBtn = Instance.new("TextButton")
         tabBtn.Parent = sidebar
         tabBtn.BackgroundColor3 = window.Theme.Sidebar
@@ -1633,13 +1659,13 @@ function SynergyUI:CreateWindow(options)
         activeIndicator.Visible = false
         addCorner(activeIndicator, 999)
 
-        if icon then
+        if iconAsset and iconAsset ~= "" then
             local iconLabel = Instance.new("ImageLabel")
             iconLabel.Parent = tabBtn
             iconLabel.BackgroundTransparency = 1
             iconLabel.Position = UDim2.new(0, 8, 0.5, -10)
             iconLabel.Size = UDim2.new(0, 20, 0, 20)
-            iconLabel.Image = icon
+            iconLabel.Image = iconAsset
             iconLabel.ImageColor3 = window.Theme.TextMuted
             tabBtn.Text = "      " .. name
         else
@@ -1682,6 +1708,10 @@ function SynergyUI:CreateWindow(options)
         if #window.Tabs == 1 then
             tabBtn.TextColor3 = window.Theme.Accent
             activeIndicator.Visible = true
+            if iconAsset and iconAsset ~= "" then
+                local img = tabBtn:FindFirstChild("ImageLabel")
+                if img then img.ImageColor3 = window.Theme.Accent end
+            end
             window.CurrentTab = scrollFrame
         end
 
@@ -1690,11 +1720,15 @@ function SynergyUI:CreateWindow(options)
                 t.Button.TextColor3 = window.Theme.TextMuted
                 t.Content.Visible = false
                 if t.ActiveIndicator then t.ActiveIndicator.Visible = false end
+                local img = t.Button:FindFirstChild("ImageLabel")
+                if img then img.ImageColor3 = window.Theme.TextMuted end
             end
             tabBtn.TextColor3 = window.Theme.Accent
             activeIndicator.Visible = true
             scrollFrame.Visible = true
             window.CurrentTab = scrollFrame
+            local img = tabBtn:FindFirstChild("ImageLabel")
+            if img then img.ImageColor3 = window.Theme.Accent end
         end))
 
         local elements = {}
