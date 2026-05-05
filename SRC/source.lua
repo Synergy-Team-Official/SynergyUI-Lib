@@ -338,7 +338,6 @@ function ControlFactory:createToggle(options)
 end
 
 function ControlFactory:createSlider(options)
-    if options.Range[1] == options.Range[2] then return end
     local val = options.CurrentValue or options.Range[1]
     local flag = options.Flag or options.Name
 
@@ -1075,8 +1074,6 @@ function ControlFactory:createColorPicker(options)
         self.save()
     end
 
-    local sliders = {}
-
     local function makeSlider(name, yPos, tint, initVal, callback)
         local sFrame = Instance.new("Frame")
         sFrame.Parent = container
@@ -1135,16 +1132,11 @@ function ControlFactory:createColorPicker(options)
                 update()
             end
         end)
-
-        return sFill, function(val)
-            local pos = val
-            sFill.Size = UDim2.new(pos, 0, 1, 0)
-        end
     end
 
-    local rFill, setR = makeSlider("R", 12, Color3.fromRGB(255, 80, 80), r, function(v) r = v end)
-    local gFill, setG = makeSlider("G", 48, Color3.fromRGB(80, 255, 80), g, function(v) g = v end)
-    local bFill, setB = makeSlider("B", 84, Color3.fromRGB(80, 150, 255), b, function(v) b = v end)
+    makeSlider("R", 12, Color3.fromRGB(255, 80, 80), r, function(v) r = v end)
+    makeSlider("G", 48, Color3.fromRGB(80, 255, 80), g, function(v) g = v end)
+    makeSlider("B", 84, Color3.fromRGB(80, 150, 255), b, function(v) b = v end)
 
     local isOpen = false
     local connection = btn.MouseButton1Click:Connect(function()
@@ -1157,9 +1149,6 @@ function ControlFactory:createColorPicker(options)
         GetValue = function() return Color3.new(r, g, b) end,
         SetValue = function(_, newColor)
             r, g, b = newColor.R, newColor.G, newColor.B
-            setR(r)
-            setG(g)
-            setB(b)
             update()
         end
     }
@@ -1167,7 +1156,7 @@ function ControlFactory:createColorPicker(options)
 
     self.registerControl(flag,
         function() return {r, g, b} end,
-        function(v) r, g, b = v[1], v[2], v[3]; setR(r); setG(g); setB(b); update() end,
+        function(v) r, g, b = v[1], v[2], v[3]; update() end,
         function() end
     )
     return flagObj, connection
@@ -1684,6 +1673,7 @@ function SynergyUI:CreateWindow(options)
         tabBtn.TextColor3 = window.Theme.TextMuted
         tabBtn.TextSize = 14
         tabBtn.TextXAlignment = Enum.TextXAlignment.Left
+        tabBtn.Position = UDim2.new(0, window.Theme.PaddingHorizontal + 10, 0, 0)
 
         local activeIndicator = Instance.new("Frame")
         activeIndicator.Parent = tabBtn
@@ -1698,16 +1688,15 @@ function SynergyUI:CreateWindow(options)
             local iconLabel = Instance.new("ImageLabel")
             iconLabel.Parent = tabBtn
             iconLabel.BackgroundTransparency = 1
-            iconLabel.Position = UDim2.new(0, 18, 0.5, -10)
+            iconLabel.Position = UDim2.new(0, 16, 0.5, -10)
             iconLabel.Size = UDim2.new(0, 20, 0, 20)
             iconLabel.Image = iconAsset
             iconLabel.ImageColor3 = window.Theme.TextMuted
             tabBtn.Text = "          " .. name
-            tabBtn.Position = UDim2.new(0, 0, 0, 0)
         else
-            tabBtn.Text = name
-            tabBtn.Position = UDim2.new(0, window.Theme.PaddingHorizontal + 10, 0, 0)
-            activeIndicator.Position = UDim2.new(0, -window.Theme.PaddingHorizontal - 10, 0.15, 0)
+            tabBtn.TextXAlignment = Enum.TextXAlignment.Center
+            tabBtn.Position = UDim2.new(0, 0, 0, 0)
+            activeIndicator.Position = UDim2.new(0, 0, 0.15, 0)
         end
 
         local scrollFrame = Instance.new("ScrollingFrame")
