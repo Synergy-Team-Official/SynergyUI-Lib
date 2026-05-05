@@ -1577,8 +1577,6 @@ function SynergyUI:CreateWindow(options)
                     iconMap = loadedMap
                 end
             end
-        else
-            warn("Failed to load icon set, using fallback icons")
         end
     end
 
@@ -1643,7 +1641,12 @@ function SynergyUI:CreateWindow(options)
         resizeHandle.BackgroundColor3 = color
         sidebar.ScrollBarImageColor3 = color
         for _, tab in ipairs(window.Tabs) do
-            if tab.Button.TextColor3 ~= window.Theme.TextMuted then tab.Button.TextColor3 = color end
+            local lbl = tab.Button:FindFirstChild("TabLabel")
+            if lbl then
+                if lbl.TextColor3 ~= window.Theme.TextMuted then lbl.TextColor3 = color end
+            else
+                if tab.Button.TextColor3 ~= window.Theme.TextMuted then tab.Button.TextColor3 = color end
+            end
             if tab.ActiveIndicator then tab.ActiveIndicator.BackgroundColor3 = color end
         end
         for _, control in ipairs(window.Controls) do
@@ -1669,16 +1672,19 @@ function SynergyUI:CreateWindow(options)
         tabBtn.BackgroundColor3 = window.Theme.Sidebar
         tabBtn.BorderSizePixel = 0
         tabBtn.Size = UDim2.new(1, 0, 0, 42)
-        tabBtn.Font = window.Theme.Font
-        tabBtn.Text = name
-        tabBtn.TextColor3 = window.Theme.TextMuted
-        tabBtn.TextSize = 14
-        tabBtn.TextXAlignment = Enum.TextXAlignment.Left
+        tabBtn.Text = ""
         tabBtn.Position = UDim2.new(0, window.Theme.PaddingHorizontal + 10, 0, 0)
 
-        local textPadding = Instance.new("UIPadding")
-        textPadding.Parent = tabBtn
-        textPadding.PaddingLeft = UDim.new(0, 44)
+        local tabLabel = Instance.new("TextLabel")
+        tabLabel.Name = "TabLabel"
+        tabLabel.Parent = tabBtn
+        tabLabel.BackgroundTransparency = 1
+        tabLabel.Size = UDim2.new(1, 0, 1, 0)
+        tabLabel.Font = window.Theme.Font
+        tabLabel.TextColor3 = window.Theme.TextMuted
+        tabLabel.TextSize = 14
+        tabLabel.TextXAlignment = Enum.TextXAlignment.Left
+        tabLabel.Text = name
 
         local activeIndicator = Instance.new("Frame")
         activeIndicator.Parent = tabBtn
@@ -1697,9 +1703,11 @@ function SynergyUI:CreateWindow(options)
             iconLabel.Size = UDim2.new(0, 20, 0, 20)
             iconLabel.Image = iconAsset
             iconLabel.ImageColor3 = window.Theme.TextMuted
-            tabBtn.Text = name
+            tabLabel.Position = UDim2.new(0, 46, 0, 0)
+            tabLabel.Size = UDim2.new(1, -46, 1, 0)
         else
-            tabBtn.TextXAlignment = Enum.TextXAlignment.Center
+            tabLabel.TextXAlignment = Enum.TextXAlignment.Center
+            tabLabel.Position = UDim2.new(0, 0, 0, 0)
             tabBtn.Position = UDim2.new(0, 0, 0, 0)
             activeIndicator.Position = UDim2.new(0, 0, 0.15, 0)
         end
@@ -1736,6 +1744,8 @@ function SynergyUI:CreateWindow(options)
         table.insert(window.Tabs, tabData)
 
         if #window.Tabs == 1 then
+            local lbl = tabBtn:FindFirstChild("TabLabel")
+            if lbl then lbl.TextColor3 = window.Theme.Accent end
             tabBtn.TextColor3 = window.Theme.Accent
             activeIndicator.Visible = true
             if iconAsset and iconAsset ~= "" then
@@ -1747,12 +1757,16 @@ function SynergyUI:CreateWindow(options)
 
         addConnection(tabBtn.MouseButton1Click:Connect(function()
             for _, t in ipairs(window.Tabs) do
+                local tlbl = t.Button:FindFirstChild("TabLabel")
+                if tlbl then tlbl.TextColor3 = window.Theme.TextMuted end
                 t.Button.TextColor3 = window.Theme.TextMuted
                 t.Content.Visible = false
                 if t.ActiveIndicator then t.ActiveIndicator.Visible = false end
                 local img = t.Button:FindFirstChild("ImageLabel")
                 if img then img.ImageColor3 = window.Theme.TextMuted end
             end
+            local lbl = tabBtn:FindFirstChild("TabLabel")
+            if lbl then lbl.TextColor3 = window.Theme.Accent end
             tabBtn.TextColor3 = window.Theme.Accent
             activeIndicator.Visible = true
             scrollFrame.Visible = true
