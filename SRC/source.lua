@@ -170,6 +170,42 @@ function SynergyUI:Notify(message, duration, typeColor, position)
     if #NotificationQueue == 1 then showNextNotification() end
 end
 
+function SynergyUI:GetConfigPath(name)
+    return "SynergyUI_Config_" .. tostring(name) .. ".json"
+end
+
+function SynergyUI:SaveConfig(name, data)
+    local success, result = pcall(function()
+        local json = HttpService:JSONEncode(data)
+        if writefile then
+            writefile(self:GetConfigPath(name), json)
+            return true
+        elseif syn and syn.writefile then
+            syn.writefile(self:GetConfigPath(name), json)
+            return true
+        end
+        return false
+    end)
+    return success and result or false
+end
+
+function SynergyUI:LoadConfig(name)
+    local success, result = pcall(function()
+        local content = nil
+        if readfile then
+            content = readfile(self:GetConfigPath(name))
+        elseif syn and syn.readfile then
+            content = syn.readfile(self:GetConfigPath(name))
+        end
+        if content then
+            return HttpService:JSONDecode(content)
+        end
+        return nil
+    end)
+    if success and result then return result end
+    return nil
+end
+
 local ControlFactory = {}
 function ControlFactory:new(parent, theme, updateThemeCallback)
     local obj = {}
@@ -1753,6 +1789,65 @@ function SynergyUI:CreateWindow(options)
         end
 
         return elements
+    end
+
+    if options.ConfigFile then
+        local configName = options.ConfigFile
+        local saved = SynergyUI:LoadConfig(configName)
+        if saved then
+            if saved.WindowPosition and saved.WindowPosition.ScaleX and saved.WindowPosition.OffsetX then
+                mainFrame.Position = UDim2.new(saved.WindowPosition.ScaleX, saved.WindowPosition.OffsetX, saved.WindowPosition.ScaleY, saved.WindowPosition.OffsetY)
+            end
+            if saved.WindowSize and saved.WindowSize.Width and saved.WindowSize.Height then
+                mainFrame.Size = UDim2.new(0, saved.WindowSize.Width, 0, saved.WindowSize.Height)
+            end
+            if saved.Flags then
+                for flagName, value in pairs(saved.Flags) do
+                    local flagObj = window.Flags[flagName]
+                    if flagObj and flagObj.SetValue then
+                        if type(value) == "table" and value._type == "Color3" then
+                            flagObj:SetValue(Color3.new(value.R, value.G, value.B))
+                        else
+                            flagObj:SetValue(value)
+                        end
+                    end
+                end
+            end
+        end
+        local function saveConfig()
+            local configData = {
+                WindowPosition = {
+                    ScaleX = mainFrame.Position.X.Scale,
+                    OffsetX = mainFrame.Position.X.Offset,
+                    ScaleY = mainFrame.Position.Y.Scale,
+                    OffsetY = mainFrame.Position.Y.Offset,
+                },
+                WindowSize = {
+                    Width = mainFrame.Size.X.Offset,
+                    Height = mainFrame.Size.Y.Offset,
+                },
+                Flags = {},
+            }
+            for flagName, flagObj in pairs(window.Flags) do
+                local val = flagObj.GetValue()
+                if typeof(val) == "Color3" then
+                    val = { _type = "Color3", R = val.R, G = val.G, B = val.B }
+                end
+                configData.Flags[flagName] = val
+            end
+            SynergyUI:SaveConfig(configName, configData)
+        end
+        local flagSaveConnections = {}
+        for flagName, flagObj in pairs(window.Flags) do
+            local originalSet = flagObj.SetValue
+            flagObj.SetValue = function(self, v)
+                originalSet(self, v)
+                saveConfig()
+            end
+        end
+        addConnection(mainFrame:GetPropertyChangedSignal("Position"):Connect(saveConfig))
+        addConnection(mainFrame:GetPropertyChangedSignal("Size"):Connect(saveConfig))
+        addConnection(window:GetPropertyChangedSignal("IsMinimized"):Connect(saveConfig))
     end
 
     return window
