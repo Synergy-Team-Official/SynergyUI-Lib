@@ -48,7 +48,6 @@ local function addHoverEffect(button, originalColor, hoverColor, useScale)
         scale.Scale = 1
         scale.Parent = button
     end
-
     button.MouseEnter:Connect(function()
         createTween(button, 0.18, {BackgroundColor3 = hoverColor})
         if scale then createTween(scale, 0.18, {Scale = 1.04}) end
@@ -178,6 +177,8 @@ function ControlFactory:new(parent, theme, updateThemeCallback)
     obj.updateTheme = updateThemeCallback
     obj.controls = {}
     obj.connections = {}
+    obj._savedConfig = nil
+    obj._saveConfig = nil
     setmetatable(obj, { __index = ControlFactory })
     return obj
 end
@@ -264,8 +265,9 @@ function ControlFactory:createButton(options)
 end
 
 function ControlFactory:createToggle(options)
-    local state = options.CurrentValue or false
     local flag = options.Flag or options.Name
+    local savedVal = self._savedConfig and self._savedConfig[flag]
+    local state = (savedVal ~= nil and type(savedVal) == "boolean") and savedVal or (options.CurrentValue or false)
 
     local frame = Instance.new("Frame")
     frame.Parent = self.parent
@@ -306,6 +308,8 @@ function ControlFactory:createToggle(options)
     btn.Size = UDim2.new(1, 0, 1, 0)
     btn.Text = ""
 
+    local saveRef = self._saveConfig
+
     local function update(val)
         state = val
         createTween(inner, 0.25, {
@@ -314,6 +318,7 @@ function ControlFactory:createToggle(options)
         })
         label.TextColor3 = state and self.theme.Accent or self.theme.Text
         pcall(options.Callback, state)
+        if saveRef then saveRef() end
     end
 
     local flagObj = {
@@ -329,8 +334,14 @@ function ControlFactory:createToggle(options)
 end
 
 function ControlFactory:createSlider(options)
-    local val = options.CurrentValue or options.Range[1]
     local flag = options.Flag or options.Name
+    local savedVal = self._savedConfig and self._savedConfig[flag]
+    local val
+    if savedVal ~= nil and type(savedVal) == "number" then
+        val = math.clamp(savedVal, options.Range[1], options.Range[2])
+    else
+        val = options.CurrentValue or options.Range[1]
+    end
 
     local frame = Instance.new("Frame")
     frame.Parent = self.parent
@@ -407,6 +418,8 @@ function ControlFactory:createSlider(options)
     end)
 
     local dragging = false
+    local saveRef = self._saveConfig
+
     local function move(input)
         local pos = math.clamp((input.Position.X - bg.AbsolutePosition.X) / bg.AbsoluteSize.X, 0, 1)
         local calc = options.Range[1] + pos * (options.Range[2] - options.Range[1])
@@ -436,6 +449,7 @@ function ControlFactory:createSlider(options)
     local connection2 = UserInputService.InputEnded:Connect(function(input)
         if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) and dragging then
             dragging = false
+            if saveRef then saveRef() end
         end
     end)
 
@@ -455,6 +469,7 @@ function ControlFactory:createSlider(options)
             valLabel.Text = tostring(val)
             fill.Size = UDim2.new((val - options.Range[1]) / (options.Range[2] - options.Range[1]), 0, 1, 0)
             pcall(options.Callback, val)
+            if saveRef then saveRef() end
         else
             numInput.Text = tostring(val)
         end
@@ -480,9 +495,15 @@ function ControlFactory:createSlider(options)
 end
 
 function ControlFactory:createDropdown(options)
-    local current = options.CurrentOption or options.Options[1] or ""
-    local optionsList = options.Options or {}
     local flag = options.Flag or options.Name
+    local optionsList = options.Options or {}
+    local savedVal = self._savedConfig and self._savedConfig[flag]
+    local current
+    if savedVal ~= nil and type(savedVal) == "string" and table.find(optionsList, savedVal) then
+        current = savedVal
+    else
+        current = options.CurrentOption or optionsList[1] or ""
+    end
 
     local frame = Instance.new("Frame")
     frame.Parent = self.parent
@@ -530,6 +551,7 @@ function ControlFactory:createDropdown(options)
 
     local isOpen = false
     local optionButtons = {}
+    local saveRef = self._saveConfig
 
     local function updateButtonText()
         btn.Text = options.Name .. " : " .. (current == "" and "None" or current)
@@ -558,6 +580,7 @@ function ControlFactory:createDropdown(options)
                 container.Size = UDim2.new(1, 0, 0, 0)
                 icon.Text = "v"
                 pcall(options.Callback, opt)
+                if saveRef then saveRef() end
             end)
             table.insert(optionButtons, optBtn)
         end
@@ -605,12 +628,15 @@ function ControlFactory:createDropdown(options)
 end
 
 function ControlFactory:createChecklist(options)
+    local flag = options.Flag or options.Name
     local optionsList = options.Options or {}
     local selected = {}
-    if options.CurrentSelected then
+    local savedVal = self._savedConfig and self._savedConfig[flag]
+    if savedVal ~= nil and type(savedVal) == "table" then
+        for _, v in ipairs(savedVal) do selected[v] = true end
+    elseif options.CurrentSelected then
         for _, v in ipairs(options.CurrentSelected) do selected[v] = true end
     end
-    local flag = options.Flag or options.Name
 
     local frame = Instance.new("Frame")
     frame.Parent = self.parent
@@ -666,6 +692,8 @@ function ControlFactory:createChecklist(options)
     layout.Parent = container
     layout.SortOrder = Enum.SortOrder.LayoutOrder
     layout.Padding = UDim.new(0, 2)
+
+    local saveRef = self._saveConfig
 
     local function updateSelectedCount()
         local count = 0
@@ -724,6 +752,7 @@ function ControlFactory:createChecklist(options)
                     Position = selected[opt] and UDim2.new(0.5, -6, 0.5, -6) or UDim2.new(0, 3, 0.5, -6)
                 })
                 updateSelectedCount()
+                if saveRef then saveRef() end
             end)
         end
         container.CanvasSize = UDim2.new(0, 0, 0, #optionsList * self.theme.ChecklistItemHeight + 8)
@@ -781,6 +810,7 @@ end
 
 function ControlFactory:createTextInput(options)
     local flag = options.Flag or options.Name
+    local savedVal = self._savedConfig and self._savedConfig[flag]
 
     local frame = Instance.new("Frame")
     frame.Parent = self.parent
@@ -807,7 +837,7 @@ function ControlFactory:createTextInput(options)
     input.Position = UDim2.new(0, self.theme.PaddingHorizontal, 0, self.theme.PaddingVertical + self.theme.TextSizeNormal + 10)
     input.Size = UDim2.new(1, -2 * self.theme.PaddingHorizontal, 0, self.theme.TextInputFieldHeight)
     input.Font = self.theme.Font
-    input.Text = options.CurrentText or ""
+    input.Text = (savedVal ~= nil and type(savedVal) == "string") and savedVal or (options.CurrentText or "")
     input.TextColor3 = self.theme.Text
     input.TextSize = self.theme.TextSizeSmall
     input.PlaceholderText = options.Placeholder or ""
@@ -821,8 +851,11 @@ function ControlFactory:createTextInput(options)
     inputPad.PaddingLeft = UDim.new(0, 10)
     inputPad.PaddingRight = UDim.new(0, 10)
 
+    local saveRef = self._saveConfig
+
     local connection = input.FocusLost:Connect(function()
         pcall(options.Callback, input.Text)
+        if saveRef then saveRef() end
     end)
 
     local flagObj = {
@@ -836,7 +869,8 @@ end
 
 function ControlFactory:createNumberInput(options)
     local flag = options.Flag or options.Name
-    local currentVal = tonumber(options.CurrentValue) or 0
+    local savedVal = self._savedConfig and self._savedConfig[flag]
+    local currentVal = (savedVal ~= nil and type(savedVal) == "number") and savedVal or (tonumber(options.CurrentValue) or 0)
 
     local frame = Instance.new("Frame")
     frame.Parent = self.parent
@@ -880,11 +914,14 @@ function ControlFactory:createNumberInput(options)
         input.Text = input.Text:gsub("[^%d%.%-]", "")
     end)
 
+    local saveRef = self._saveConfig
+
     local connection = input.FocusLost:Connect(function()
         local num = tonumber(input.Text)
         if num then
             currentVal = num
             pcall(options.Callback, currentVal)
+            if saveRef then saveRef() end
         else
             input.Text = tostring(currentVal)
         end
@@ -900,8 +937,9 @@ function ControlFactory:createNumberInput(options)
 end
 
 function ControlFactory:createKeybind(options)
-    local current = options.CurrentKeybind or "None"
     local flag = options.Flag or options.Name
+    local savedVal = self._savedConfig and self._savedConfig[flag]
+    local current = (savedVal ~= nil and type(savedVal) == "string") and savedVal or (options.CurrentKeybind or "None")
 
     local frame = Instance.new("Frame")
     frame.Parent = self.parent
@@ -934,6 +972,8 @@ function ControlFactory:createKeybind(options)
     addStroke(bindBtn, self.theme.StrokeColor)
 
     local binding = false
+    local saveRef = self._saveConfig
+
     local connection1 = bindBtn.MouseButton1Click:Connect(function()
         binding = true
         bindBtn.Text = "..."
@@ -948,6 +988,7 @@ function ControlFactory:createKeybind(options)
                 bindBtn.Text = current
                 binding = false
                 pcall(options.Callback, current)
+                if saveRef then saveRef() end
             end
         elseif not gp then
             local inputName = input.KeyCode.Name ~= "Unknown" and input.KeyCode.Name or input.UserInputType.Name
@@ -967,8 +1008,14 @@ function ControlFactory:createKeybind(options)
 end
 
 function ControlFactory:createColorPicker(options)
-    local color = options.Color or Color3.fromRGB(0, 170, 255)
     local flag = options.Flag or options.Name
+    local savedVal = self._savedConfig and self._savedConfig[flag]
+    local color
+    if savedVal ~= nil and type(savedVal) == "table" and savedVal.__type == "Color3" then
+        color = Color3.new(savedVal.r, savedVal.g, savedVal.b)
+    else
+        color = options.Color or Color3.fromRGB(0, 170, 255)
+    end
     local r, g, b = color.R, color.G, color.B
 
     local frame = Instance.new("Frame")
@@ -1011,10 +1058,13 @@ function ControlFactory:createColorPicker(options)
     container.Size = UDim2.new(1, 0, 0, self.theme.ColorPickerExpandedHeight - self.theme.ColorPickerHeight)
     container.Visible = false
 
+    local saveRef = self._saveConfig
+
     local function update()
         local c = Color3.new(r, g, b)
         preview.BackgroundColor3 = c
         pcall(options.Callback, c)
+        if saveRef then saveRef() end
     end
 
     local function makeSlider(name, yPos, tint, initVal, callback)
@@ -1101,8 +1151,14 @@ function ControlFactory:createColorPicker(options)
 end
 
 function ControlFactory:createRadioGroup(options)
-    local selected = options.CurrentValue or options.Options[1] or ""
     local flag = options.Flag or options.Name
+    local savedVal = self._savedConfig and self._savedConfig[flag]
+    local selected
+    if savedVal ~= nil and type(savedVal) == "string" and table.find(options.Options, savedVal) then
+        selected = savedVal
+    else
+        selected = options.CurrentValue or options.Options[1] or ""
+    end
 
     local frame = Instance.new("Frame")
     frame.Parent = self.parent
@@ -1123,6 +1179,7 @@ function ControlFactory:createRadioGroup(options)
     label.TextXAlignment = Enum.TextXAlignment.Left
 
     local radioButtons = {}
+    local saveRef = self._saveConfig
 
     for i, opt in ipairs(options.Options) do
         local row = Instance.new("Frame")
@@ -1170,6 +1227,7 @@ function ControlFactory:createRadioGroup(options)
                     rb.Inner.BackgroundColor3 = (rb.Option == selected) and self.theme.Accent or Color3.fromRGB(60,60,60)
                 end
                 pcall(options.Callback, selected)
+                if saveRef then saveRef() end
             end
         end)
 
@@ -1240,6 +1298,62 @@ function SynergyUI:CreateWindow(options)
         IsMinimized = false
     }
 
+    local configFilePath = options.ConfigFile
+    local savedConfig = {}
+
+    if configFilePath then
+        pcall(function()
+            if readfile then
+                local raw = readfile(configFilePath)
+                if raw and raw ~= "" then
+                    local decoded = HttpService:JSONDecode(raw)
+                    if type(decoded) == "table" then
+                        savedConfig = decoded
+                    end
+                end
+            end
+        end)
+    end
+
+    local saveTask = nil
+    local function saveConfig()
+        if not configFilePath then return end
+        if saveTask then
+            pcall(task.cancel, saveTask)
+        end
+        saveTask = task.delay(0.3, function()
+            saveTask = nil
+            pcall(function()
+                if not writefile then return end
+                local data = {}
+                local pos = mainFrame.Position
+                data.__position = {
+                    xs = pos.X.Scale,
+                    xo = pos.X.Offset,
+                    ys = pos.Y.Scale,
+                    yo = pos.Y.Offset
+                }
+                local sz = mainFrame.Size
+                data.__size = {
+                    xo = sz.X.Offset,
+                    yo = sz.Y.Offset
+                }
+                data.__minimized = window.IsMinimized
+                for flag, flagObj in pairs(window.Flags) do
+                    local ok, val = pcall(function() return flagObj:GetValue() end)
+                    if ok then
+                        if typeof(val) == "Color3" then
+                            data[flag] = {__type = "Color3", r = val.R, g = val.G, b = val.B}
+                        else
+                            data[flag] = val
+                        end
+                    end
+                end
+                writefile(configFilePath, HttpService:JSONEncode(data))
+            end)
+        end)
+    end
+
     local strokeThickness = 2
 
     local gui = Instance.new("ScreenGui")
@@ -1255,12 +1369,26 @@ function SynergyUI:CreateWindow(options)
     mainFrame.Parent = gui
     mainFrame.BackgroundColor3 = window.Theme.Background
     mainFrame.BorderSizePixel = 0
-    mainFrame.Position = UDim2.new(0.5, -280, 0.5, -190)
-    mainFrame.Size = UDim2.new(0, 560, 0, 380)
     mainFrame.ClipsDescendants = true
     addCorner(mainFrame, window.Theme.CornerRadius)
     addStroke(mainFrame, window.Theme.Accent, strokeThickness, 0.4)
     window.MainFrame = mainFrame
+
+    if savedConfig.__position then
+        local p = savedConfig.__position
+        mainFrame.Position = UDim2.new(p.xs or 0, p.xo or 0, p.ys or 0, p.yo or 0)
+    else
+        mainFrame.Position = UDim2.new(0.5, -280, 0.5, -190)
+    end
+
+    if savedConfig.__size then
+        local s = savedConfig.__size
+        local w = math.clamp(s.xo or 560, 460, 1200)
+        local h = math.clamp(s.yo or 380, 280, 820)
+        mainFrame.Size = UDim2.new(0, w, 0, h)
+    else
+        mainFrame.Size = UDim2.new(0, 560, 0, 380)
+    end
 
     local topBar = Instance.new("Frame")
     topBar.Name = "TopBar"
@@ -1432,6 +1560,7 @@ function SynergyUI:CreateWindow(options)
     addConnection(UserInputService.InputEnded:Connect(function(input)
         if dragging and (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) then
             dragging = false
+            saveConfig()
         end
     end))
 
@@ -1457,6 +1586,7 @@ function SynergyUI:CreateWindow(options)
     addConnection(UserInputService.InputEnded:Connect(function(input)
         if resizing and (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) then
             resizing = false
+            saveConfig()
         end
     end))
 
@@ -1473,6 +1603,7 @@ function SynergyUI:CreateWindow(options)
             contentArea.Visible = true
             resizeHandle.Visible = true
         end
+        saveConfig()
     end))
 
     addConnection(closeBtn.MouseButton1Click:Connect(function()
@@ -1488,6 +1619,14 @@ function SynergyUI:CreateWindow(options)
             window:Destroy()
         end
     end))
+
+    if savedConfig.__minimized then
+        window.IsMinimized = true
+        mainFrame.Size = UDim2.new(0, mainFrame.Size.X.Offset, 0, 42)
+        sidebar.Visible = false
+        contentArea.Visible = false
+        resizeHandle.Visible = false
+    end
 
     local iconMap = {}
     if options.IconSet then
@@ -1650,6 +1789,8 @@ function SynergyUI:CreateWindow(options)
         local controlFactory = ControlFactory:new(scrollFrame, window.Theme, window.SetAccent)
         controlFactory.controls = window.Flags
         controlFactory.connections = window.Connections
+        controlFactory._savedConfig = savedConfig
+        controlFactory._saveConfig = saveConfig
 
         elements.CreateLabel = function(_, text) return controlFactory:createLabel(text) end
         elements.CreateSeparator = function() return controlFactory:createSeparator() end
