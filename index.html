@@ -566,7 +566,7 @@
             <li><a href="#full-example">Example</a></li>
             <li><a href="#window-api">API</a></li>
             <li><a href="#notifications">Notify</a></li>
-            <li><a href="#programmatic">Programmatic</a></li>
+            <li><a href="#programmatic">Flags</a></li>
             <li><a href="#themes">Themes</a></li>
         </ul>
     </nav>
@@ -586,8 +586,8 @@
         <li><a href="#window-api">Window Methods</a></li>
         <li><a href="#notifications">Notification System</a></li>
         <li><a href="#programmatic">Flags & Methods</a></li>
-        <li><a href="#themes">Theme Customization</a></li>
-        <li><a href="#config">Config File Saving</a></li>
+        <li><a href="#themes">Themes (16+ built‑in)</a></li>
+        <li><a href="#config">Config Persistence</a></li>
     </ul>
 </aside>
 
@@ -598,12 +598,12 @@
                 <span>LIBRARY · COMPLETE UI FRAMEWORK</span>
             </div>
             <h1>SynergyUI</h1>
-            <p>Modern, resizable, fully-featured UI library for Roblox executors. 15+ control types, flag system, rich notifications, keybinds, theme engine & automatic config saving.</p>
+            <p>Modern, resizable, fully-featured UI library for Roblox executors. 18+ control types, flag system, rich notifications, keybinds, theme engine & automatic config saving.</p>
             <div class="code-hero" id="hero-code">
                 <button class="copy-btn" onclick="copyHeroCode()" style="position: absolute; top: 12px; right: 12px;">Copy</button>
                 <pre><code class="language-lua">local SynergyUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Synergy-Hub-Official/SynergyUI-Lib/refs/heads/main/SRC/source.lua"))()</code></pre>
             </div>
-            <p style="margin-top: 28px; font-size: 13px; color: #5a5a78;">⚡ Drag / Resize • Toggle Key (RightShift) • Flags auto-linked • Config file persistence • 4 built‑in themes</p>
+            <p style="margin-top: 28px; font-size: 13px; color: #5a5a78;">⚡ Drag / Resize • Toggle Key (RightShift) • Flags auto-linked • Config file persistence • 16+ themes</p>
         </div>
     </section>
 
@@ -619,10 +619,10 @@ local window = SynergyUI:CreateWindow({
     IconSet = "lucide",                 -- downloads icon pack, enables named icons in tabs
     ToggleKey = Enum.KeyCode.RightShift,
     CloseOnEscape = true,
-    ConfigFile = "SynergyConfig.json",  -- automatically saves all flags, window position/size
+    ConfigName = "my_config",           -- saves flags, window size/pos, minimized state, theme
     Parent = nil                        -- defaults to CoreGui or PlayerGui in Studio
 })</code></pre></div>
-            <p><strong>IconSet</strong> downloads icon definitions from GitHub. Built‑in set: "lucide". After setting IconSet, you can use string names like "home", "settings", "info" in <code>CreateTab</code>. The <strong>ConfigFile</strong> saves every flagged control, window geometry and minimised state – loads automatically on next launch.</p>
+            <p><strong>IconSet</strong> downloads icon definitions from GitHub. Built‑in set: "lucide". After setting IconSet, you can use string names like "home", "settings", "info" in <code>CreateTab</code>. <strong>ConfigName</strong> saves every flagged control, window geometry, minimised state and current theme – loads automatically on next launch (saved in <code>SynergyUI/Settings/&lt;ConfigName&gt;.json</code>).</p>
         </div>
     </section>
 
@@ -639,7 +639,7 @@ local window = SynergyUI:CreateWindow({
                         <tr><td>IconSet</td><td>string</td><td>nil</td><td>Name of icon set (e.g. "lucide") – enables named icons in tabs</td></tr>
                         <tr><td>ToggleKey</td><td>Enum.KeyCode</td><td>RightShift</td><td>Key to show/hide UI</td></tr>
                         <tr><td>CloseOnEscape</td><td>boolean</td><td>false</td><td>If true, pressing Escape destroys window</td></tr>
-                        <tr><td>ConfigFile</td><td>string</td><td>nil</td><td>Path to JSON file for persistent flag storage and window state</td></tr>
+                        <tr><td>ConfigName</td><td>string</td><td>"default_config"</td><td>Name for JSON config file (flags, window state, theme)</td></tr>
                         <tr><td>Parent</td><td>Instance</td><td>CoreGui / PlayerGui</td><td>Parent GUI container</td></tr>
                     </tbody>
                 </table>
@@ -661,11 +661,17 @@ local infoTab = window:CreateTab("Info", "info")</code></pre></div>
     <section id="controls" class="reveal">
         <div class="section-header"><div class="dot"></div><h2>Complete Control Reference</h2></div>
         <div class="control-grid">
-            <div class="card"><h3>Toggle <span class="badge">Flag</span></h3><p>Boolean switch with state & callback.</p><div class="code-block"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre><code class="language-lua">main:CreateToggle({
+            <div class="card"><h3>Toggle <span class="badge">Flag</span></h3><p>Switch with sliding animation.</p><div class="code-block"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre><code class="language-lua">main:CreateToggle({
     Name = "ESP",
     CurrentValue = true,
     Flag = "ESP",
-    Callback = function(state) print(state) end
+    Callback = function(state) end
+})</code></pre></div></div>
+            
+            <div class="card"><h3>CheckBox <span class="badge">Flag</span></h3><p>Checkbox with tick icon.</p><div class="code-block"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre><code class="language-lua">main:CreateCheckBox({
+    Name = "Option",
+    CurrentValue = false,
+    Flag = "opt1"
 })</code></pre></div></div>
             
             <div class="card"><h3>Slider <span class="badge">Flag</span></h3><p>Numeric with increment, range, manual input.</p><div class="code-block"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre><code class="language-lua">main:CreateSlider({
@@ -678,11 +684,11 @@ local infoTab = window:CreateTab("Info", "info")</code></pre></div>
             
             <div class="card"><h3>Button</h3><p>Clickable action with optional tooltip.</p><div class="code-block"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre><code class="language-lua">main:CreateButton({
     Name = "Execute",
-    Tooltip = "Runs the main script",
-    Callback = function() SynergyUI:Notify("Done!", 2) end
+    Tooltip = "Runs main script",
+    Callback = function() end
 })</code></pre></div></div>
             
-            <div class="card"><h3>Dropdown <span class="badge">Flag</span></h3><p>Single select, dynamic options, callback, multi‑select & searchable.</p><div class="code-block"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre><code class="language-lua">local dd = main:CreateDropdown({
+            <div class="card"><h3>Dropdown <span class="badge">Flag</span></h3><p>Single/multi select, searchable, dynamic options.</p><div class="code-block"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre><code class="language-lua">local dd = main:CreateDropdown({
     Name = "Mode",
     Options = {"Normal", "Aggressive"},
     CurrentOption = "Normal",
@@ -691,11 +697,12 @@ local infoTab = window:CreateTab("Info", "info")</code></pre></div>
     Flag = "Mode"
 })
 dd:AddOption("Extreme")
-dd:RemoveOption("Aggressive")</code></pre></div></div>
+dd:RemoveOption("Aggressive")
+dd:ClearOptions()</code></pre></div></div>
             
             <div class="card"><h3>Checklist <span class="badge">Flag</span></h3><p>Multi‑selection list with selected count.</p><div class="code-block"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre><code class="language-lua">main:CreateChecklist({
     Name = "Features",
-    Options = {"Aimbot", "Wallhack", "Speed"},
+    Options = {"Aimbot", "Wallhack"},
     CurrentSelected = {"Aimbot"},
     Flag = "Features"
 })</code></pre></div></div>
@@ -719,7 +726,7 @@ dd:RemoveOption("Aggressive")</code></pre></div></div>
     Flag = "UltKey"
 })</code></pre></div></div>
             
-            <div class="card"><h3>ColorPicker <span class="badge">Flag</span></h3><p>RGB slider picker, returns Color3. Includes rainbow toggle.</p><div class="code-block"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre><code class="language-lua">main:CreateColorPicker({
+            <div class="card"><h3>ColorPicker <span class="badge">Flag</span></h3><p>RGB slider picker, returns Color3. Rainbow toggle built‑in.</p><div class="code-block"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre><code class="language-lua">main:CreateColorPicker({
     Name = "ESP Color",
     Color = Color3.fromRGB(0,255,0),
     Flag = "espColor"
@@ -732,16 +739,21 @@ dd:RemoveOption("Aggressive")</code></pre></div></div>
     Flag = "themeChoice"
 })</code></pre></div></div>
             
-            <div class="card"><h3>Paragraph & Section</h3><p>Informative blocks with optional image.</p><div class="code-block"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre><code class="language-lua">main:CreateSection("Information")
+            <div class="card"><h3>Paragraph & Section</h3><p>Informative blocks with auto height.</p><div class="code-block"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre><code class="language-lua">main:CreateSection("Information")
 main:CreateParagraph({
     Title = "Info",
-    Content = "Detailed description",
-    Image = "rbxassetid://123"
+    Content = "Detailed description"
 })</code></pre></div></div>
-            <div class="card"><h3>Image (Expandable)</h3><p>Collapsible image preview with description.</p><div class="code-block"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre><code class="language-lua">main:CreateImage({
+            <div class="card"><h3>Image (Expandable)</h3><p>Collapsible image preview.</p><div class="code-block"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre><code class="language-lua">main:CreateImage({
     Title = "Preview",
     Image = "rbxassetid://123456",
     Description = "Optional caption"
+})</code></pre></div></div>
+            <div class="card"><h3>Video</h3><p>VideoFrame control (executor support required).</p><div class="code-block"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre><code class="language-lua">main:CreateVideo({
+    Title = "Demo",
+    Video = "https://...mp4",
+    Looped = true,
+    Volume = 0.8
 })</code></pre></div></div>
             <div class="card"><h3>Label & Separator</h3><div class="code-block"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre><code class="language-lua">main:CreateLabel("Heading text")
 main:CreateSeparator()</code></pre></div></div>
@@ -765,7 +777,7 @@ local window = SynergyUI:CreateWindow({
     Theme = "Rise",
     ToggleKey = Enum.KeyCode.RightShift,
     CloseOnEscape = false,
-    ConfigFile = "SynergyUI_Demo_Config.json"
+    ConfigName = "SynergyUI_Demo_Config"
 })
 
 local mainTab = window:CreateTab("Main", "home")
@@ -780,11 +792,7 @@ local masterToggle = mainTab:CreateToggle({
     Flag = "MasterToggle",
     CurrentValue = true,
     Callback = function(state)
-        SynergyUI:Notify({
-            Message = "Master Switch: " .. (state and "Enabled" or "Disabled"),
-            Type = state and "done" or "warning",
-            Duration = 2
-        })
+        SynergyUI:Notify({Message = "Master Switch: " .. (state and "Enabled" or "Disabled"), Type = state and "done" or "warning", Duration = 2})
     end
 })
 
@@ -797,54 +805,10 @@ local volumeSlider = mainTab:CreateSlider({
     Callback = function(val) print("Volume changed to: " .. val) end
 })
 
-mainTab:CreateButton({
-    Name = "Test Notification (info)",
-    Tooltip = "Shows an info notification",
-    Callback = function()
-        SynergyUI:Notify({
-            Message = "This is an INFO notification!",
-            Type = "info",
-            Duration = 3,
-            Position = "TopRight"
-        })
-    end
-})
-
-mainTab:CreateButton({
-    Name = "Success Notification",
-    Callback = function()
-        SynergyUI:Notify({
-            Message = "Operation completed successfully.",
-            Type = "done",
-            Duration = 2.5,
-            Position = "BottomRight"
-        })
-    end
-})
-
-mainTab:CreateButton({
-    Name = "Warning Notification",
-    Callback = function()
-        SynergyUI:Notify({
-            Message = "This is an important warning.",
-            Type = "warning",
-            Duration = 3,
-            Position = "TopLeft"
-        })
-    end
-})
-
-mainTab:CreateButton({
-    Name = "Error Notification",
-    Callback = function()
-        SynergyUI:Notify({
-            Message = "An unexpected error occurred.",
-            Type = "error",
-            Duration = 4,
-            Position = "BottomLeft"
-        })
-    end
-})
+mainTab:CreateButton({Name = "Info Notification", Callback = function() SynergyUI:Notify({Message = "Info message", Type = "info", Duration = 3, Position = "TopRight"}) end})
+mainTab:CreateButton({Name = "Success Notification", Callback = function() SynergyUI:Notify({Message = "Operation successful", Type = "done", Duration = 2.5, Position = "BottomRight"}) end})
+mainTab:CreateButton({Name = "Warning Notification", Callback = function() SynergyUI:Notify({Message = "Important warning", Type = "warning", Duration = 3, Position = "TopLeft"}) end})
+mainTab:CreateButton({Name = "Error Notification", Callback = function() SynergyUI:Notify({Message = "Unexpected error", Type = "error", Duration = 4, Position = "BottomLeft"}) end})
 
 mainTab:CreateSeparator()
 mainTab:CreateSection("Interactive Controls")
@@ -854,9 +818,7 @@ local gameModeDropdown = mainTab:CreateDropdown({
     Flag = "GameMode",
     Options = {"Casual", "Competitive", "Hardcore", "Creative"},
     CurrentOption = "Competitive",
-    Callback = function(selected)
-        SynergyUI:Notify({Message = "Mode changed to: " .. selected, Type = "info"})
-    end
+    Callback = function(selected) SynergyUI:Notify({Message = "Mode: " .. selected, Type = "info"}) end
 })
 
 local featureChecklist = mainTab:CreateChecklist({
@@ -864,9 +826,7 @@ local featureChecklist = mainTab:CreateChecklist({
     Flag = "Features",
     Options = {"Aimbot", "ESP", "Speedhack", "Fly", "NoClip"},
     CurrentSelected = {"ESP", "Speedhack"},
-    Callback = function(selectedTable)
-        print("Selected features: " .. table.concat(selectedTable, ", "))
-    end
+    Callback = function(selected) print("Selected: " .. table.concat(selected, ", ")) end
 })
 
 local colorThemeRadio = mainTab:CreateRadioGroup({
@@ -875,15 +835,8 @@ local colorThemeRadio = mainTab:CreateRadioGroup({
     Options = {"Blue", "Red", "Green", "Purple"},
     CurrentValue = "Blue",
     Callback = function(selected)
-        if selected == "Blue" then
-            window:SetAccent(Color3.fromRGB(0, 170, 255))
-        elseif selected == "Red" then
-            window:SetAccent(Color3.fromRGB(255, 80, 80))
-        elseif selected == "Green" then
-            window:SetAccent(Color3.fromRGB(0, 230, 100))
-        elseif selected == "Purple" then
-            window:SetAccent(Color3.fromRGB(170, 80, 255))
-        end
+        local colors = {Blue = Color3.fromRGB(0,170,255), Red = Color3.fromRGB(255,80,80), Green = Color3.fromRGB(0,230,100), Purple = Color3.fromRGB(170,80,255)}
+        window:SetAccent(colors[selected])
     end
 })
 
@@ -892,7 +845,7 @@ themesTab:CreateSection("Visual Theme")
 local themeDropdown = themesTab:CreateDropdown({
     Name = "Global Theme",
     Flag = "SelectedTheme",
-    Options = {"Rise", "Dark", "Cyberpunk", "TokyoNight"},
+    Options = {"Rise", "Dark", "Cyberpunk", "TokyoNight", "Red", "BloodRed", "White", "Ubuntu", "Glacier", "Midnight", "Anime", "Femboy", "Hanki", "Ocean", "Forest", "Sunset"},
     CurrentOption = "Rise",
     Callback = function(themeName)
         window:SetTheme(themeName)
@@ -911,13 +864,10 @@ local accentPicker = themesTab:CreateColorPicker({
 })
 
 themesTab:CreateButton({
-    Name = "Reset Accent to Default",
-    Tooltip = "Restores the original blue accent",
+    Name = "Reset Accent",
     Callback = function()
         window:SetAccent(Color3.fromRGB(0, 170, 255))
-        if accentPicker.SetValue then
-            accentPicker:SetValue(Color3.fromRGB(0, 170, 255))
-        end
+        if accentPicker.SetValue then accentPicker:SetValue(Color3.fromRGB(0, 170, 255)) end
     end
 })
 
@@ -928,14 +878,14 @@ local textInputDemo = controlsTab:CreateTextInput({
     Flag = "Username",
     Placeholder = "Enter your name...",
     CurrentText = "SynergyUser",
-    Callback = function(text) print("Username updated: " .. text) end
+    Callback = function(text) print("Username: " .. text) end
 })
 
 local numberInputDemo = controlsTab:CreateNumberInput({
     Name = "Numeric Value",
     Flag = "NumericValue",
     CurrentValue = 42,
-    Callback = function(val) print("Current number: " .. val) end
+    Callback = function(val) print("Number: " .. val) end
 })
 
 controlsTab:CreateSeparator()
@@ -945,9 +895,7 @@ local triggerKeybind = controlsTab:CreateKeybind({
     Name = "Activation Key",
     Flag = "TriggerKey",
     CurrentKeybind = "X",
-    Callback = function(key)
-        SynergyUI:Notify({Message = "Key assigned: " .. key, Type = "info", Duration = 1.5})
-    end
+    Callback = function(key) print("Key assigned: " .. key) end
 })
 
 controlsTab:CreateSeparator()
@@ -957,9 +905,7 @@ local colorPickerDemo = controlsTab:CreateColorPicker({
     Name = "Highlight Color",
     Flag = "HighlightColor",
     Color = Color3.fromRGB(255, 200, 100),
-    Callback = function(color)
-        print(string.format("Color selected: R=%.2f G=%.2f B=%.2f", color.R, color.G, color.B))
-    end
+    Callback = function(color) print("Color selected") end
 })
 
 controlsTab:CreateSeparator()
@@ -972,60 +918,73 @@ local dynamicDropdown = controlsTab:CreateDropdown({
     MultiSelect = false,
     Searchable = true,
     CurrentOption = "Option A",
-    Callback = function(selected)
-        SynergyUI:Notify({Message = "You selected: " .. selected, Type = "info", Duration = 1})
-    end
+    Callback = function(selected) SynergyUI:Notify({Message = "Selected: " .. selected, Type = "info", Duration = 1}) end
 })
 
-controlsTab:CreateButton({
-    Name = "Add Option 'New'",
-    Callback = function()
-        dynamicDropdown:AddOption("New_" .. math.random(100, 999))
-    end
-})
-
-controlsTab:CreateButton({
-    Name = "Remove 'Option B'",
-    Callback = function() dynamicDropdown:RemoveOption("Option B") end
-})
-
-controlsTab:CreateButton({
-    Name = "Clear All Options",
-    Callback = function()
-        dynamicDropdown:ClearOptions()
-        dynamicDropdown:AddOption("Reset")
-    end
-})
+controlsTab:CreateButton({Name = "Add 'New'", Callback = function() dynamicDropdown:AddOption("New_" .. math.random(100,999)) end})
+controlsTab:CreateButton({Name = "Remove 'Option B'", Callback = function() dynamicDropdown:RemoveOption("Option B") end})
+controlsTab:CreateButton({Name = "Clear Options", Callback = function() dynamicDropdown:ClearOptions(); dynamicDropdown:AddOption("Reset") end})
 
 controlsTab:CreateSeparator()
-controlsTab:CreateSection("Flag Access")
+controlsTab:CreateSection("Flag Access & Utilities")
 
 controlsTab:CreateButton({
-    Name = "Show All Flags Status",
+    Name = "Show All Flags",
     Callback = function()
-        local msg = "=== CURRENT FLAGS ===\n"
-        msg = msg .. "MasterToggle: " .. tostring(window.Flags.MasterToggle:GetValue()) .. "\n"
-        msg = msg .. "Volume: " .. tostring(window.Flags.Volume:GetValue()) .. "\n"
-        msg = msg .. "GameMode: " .. tostring(window.Flags.GameMode:GetValue()) .. "\n"
-        msg = msg .. "Username: " .. window.Flags.Username:GetValue() .. "\n"
-        msg = msg .. "TriggerKey: " .. window.Flags.TriggerKey:GetValue() .. "\n"
-        msg = msg .. "SelectedTheme: " .. window.Flags.SelectedTheme:GetValue()
+        local msg = "=== FLAGS ===\nMasterToggle: " .. tostring(window.Flags.MasterToggle:GetValue()) ..
+                   "\nVolume: " .. window.Flags.Volume:GetValue() ..
+                   "\nGameMode: " .. window.Flags.GameMode:GetValue() ..
+                   "\nUsername: " .. window.Flags.Username:GetValue() ..
+                   "\nTriggerKey: " .. window.Flags.TriggerKey:GetValue() ..
+                   "\nSelectedTheme: " .. window.Flags.SelectedTheme:GetValue()
         SynergyUI:Notify({Message = msg, Type = "info", Duration = 5})
     end
 })
 
-controlsTab:CreateButton({
-    Name = "Set Volume to 100",
-    Callback = function()
-        if window.Flags.Volume then window.Flags.Volume:SetValue(100) end
-    end
+controlsTab:CreateButton({Name = "Set Volume to 100", Callback = function() if window.Flags.Volume then window.Flags.Volume:SetValue(100) end end})
+controlsTab:CreateButton({Name = "Toggle Master Switch", Callback = function() local cur = window.Flags.MasterToggle:GetValue(); window.Flags.MasterToggle:SetValue(not cur) end})
+
+controlsTab:CreateSeparator()
+controlsTab:CreateSection("New Controls")
+
+local demoCheckbox = controlsTab:CreateCheckBox({
+    Name = "Example CheckBox",
+    Flag = "DemoCheckbox",
+    CurrentValue = false,
+    Callback = function(state) print("CheckBox: " .. tostring(state)) end
+})
+
+controlsTab:CreateParagraph({
+    Title = "Test Paragraph",
+    Content = "This block auto‑adjusts its height based on content. Perfect for descriptions and long texts."
+})
+
+controlsTab:CreateImage({
+    Title = "Example Image (expandable)",
+    Image = "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y",
+    Description = "Click the title to expand/collapse."
+})
+
+controlsTab:CreateVideo({
+    Title = "Demo Video (requires VideoFrame support)",
+    Video = "https://sample-videos.com/video123/mp4/720/big_buck_bunny_720p_1mb.mp4",
+    Looped = true,
+    Volume = 0.8
 })
 
 controlsTab:CreateButton({
-    Name = "Toggle Master Switch",
+    Name = "Show Game Notification (Modal)",
     Callback = function()
-        local current = window.Flags.MasterToggle:GetValue()
-        window.Flags.MasterToggle:SetValue(not current)
+        SynergyUI:CreateGameNotification({
+            Title = "Confirmation",
+            MiniTitle = "Are you sure?",
+            Description = "This action cannot be undone.",
+            Image = "rbxassetid://3926305904",
+            YesText = "Accept",
+            YesCallback = function() print("User accepted") end,
+            NoText = "Cancel",
+            NoCallback = function() print("User cancelled") end
+        })
     end
 })
 
@@ -1033,42 +992,22 @@ infoTab:CreateSection("About SynergyUI")
 
 infoTab:CreateParagraph({
     Title = "SynergyUI Library - Full Version",
-    Content = "This library includes: resizable window, draggable header, notification system, 15+ control types, config persistence (flags), predefined themes, customizable accent, keybinds, image support, and much more.\n\nAll flags are automatically saved to the specified ConfigFile. Controls support GetValue/SetValue methods, and some also provide AddOption/RemoveOption.",
-    Image = "https://raw.githubusercontent.com/Synergy-Team-Official/Scripts/main/Synergy-Hub.jpg"
+    Content = "Library includes: resizable window, draggable header, notification system, 18+ control types, config persistence (flags), 16+ built‑in themes, customizable accent, keybinds, image/video support, and more. All flags are automatically saved to ConfigName.json. Controls support GetValue/SetValue, and dropdowns/checklists support dynamic options."
 })
 
 infoTab:CreateImage({
-    Title = "Expandable Image Example",
-    Image = "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y",
-    Description = "Click the title to expand/collapse this image."
+    Title = "Logo Example",
+    Image = "rbxassetid://3926305904",
+    Description = "Image from Roblox asset."
 })
 
 infoTab:CreateSeparator()
 infoTab:CreateSection("Utilities")
 
-infoTab:CreateButton({
-    Name = "Reload Rise Theme",
-    Callback = function()
-        window:SetTheme("Rise")
-        themeDropdown:SetValue("Rise")
-    end
-})
+infoTab:CreateButton({Name = "Reload Rise Theme", Callback = function() window:SetTheme("Rise"); themeDropdown:SetValue("Rise") end})
+infoTab:CreateButton({Name = "Destroy Window", Callback = function() window:Destroy() end})
 
-infoTab:CreateButton({
-    Name = "Destroy Window",
-    Tooltip = "Completely removes the GUI. Re-run the script to reopen.",
-    Callback = function()
-        window:Destroy()
-        SynergyUI:Notify({Message = "Window destroyed. Reload script to reopen.", Type = "warning", Duration = 4})
-    end
-})
-
-SynergyUI:Notify({
-    Message = "Demo fully loaded | Press RightShift to toggle",
-    Type = "done",
-    Duration = 4,
-    Position = "TopRight"
-})
+SynergyUI:Notify({Message = "Demo fully loaded | Press RightShift to toggle", Type = "done", Duration = 4, Position = "TopRight"})
 
 task.wait(1)
 print("=== SynergyUI Demo Started ===")
@@ -1083,9 +1022,9 @@ print("Available flags:", window.Flags)</code></pre>
             <div class="method-list">
                 <div class="method-item"><span class="method-name">:CreateTab(name, iconName?)</span> – Adds a new tab, returns tab object with control constructors. Icon name is only used if IconSet was provided.</div>
                 <div class="method-item"><span class="method-name">:SetAccent(color)</span> – Dynamically changes the accent color (borders, indicators, sliders).</div>
-                <div class="method-item"><span class="method-name">:SetTheme(themeName)</span> – Switches between built‑in themes: "Rise", "Dark", "Cyberpunk", "TokyoNight".</div>
+                <div class="method-item"><span class="method-name">:SetTheme(themeName)</span> – Switches between built‑in themes: "Rise", "Dark", "Cyberpunk", "TokyoNight", "Red", "BloodRed", "White", "Ubuntu", "Glacier", "Midnight", "Anime", "Femboy", "Hanki", "Ocean", "Forest", "Sunset".</div>
                 <div class="method-item"><span class="method-name">:Destroy()</span> – Completely removes the UI and disconnects all events.</div>
-                <div class="method-item"><span class="method-name">.Flags</span> – Table containing all flagged controls (Toggle, Slider, Dropdown, Checklist, TextInput, NumberInput, Keybind, ColorPicker, RadioGroup). Each provides <code>:GetValue()</code> and <code>:SetValue(val)</code> plus specific methods.</div>
+                <div class="method-item"><span class="method-name">.Flags</span> – Table containing all flagged controls (Toggle, Slider, Dropdown, Checklist, TextInput, NumberInput, Keybind, ColorPicker, RadioGroup). Each provides <code>:GetValue()</code> and <code>:SetValue(val)</code> plus specific methods (AddOption, RemoveOption, etc.).</div>
                 <div class="method-item"><span class="method-name">.MainFrame</span> – Direct access to the main GUI frame (advanced positioning).</div>
             </div>
         </div>
@@ -1111,6 +1050,15 @@ print("Available flags:", window.Flags)</code></pre>
             <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre><code class="language-lua">SynergyUI:Notify("Simple message")
 SynergyUI:Notify({Message = "Success", Type = "done", Duration = 3, Position = "BottomRight"})
 SynergyUI:Notify({Message = "Error!", Type = "error", Callback = function() print("closed") end})</code></pre></div>
+            <h3>Game Notification (Modal)</h3>
+            <p><strong>SynergyUI:CreateGameNotification(options)</strong> – Shows a modal dialog with Yes/No buttons.</p>
+            <div class="param-table">
+                <table><thead><tr><th>Option</th><th>Type</th></tr></thead><tbody>
+                <tr><td>Title</td><td>string</td></tr><tr><td>MiniTitle</td><td>string</td></tr><tr><td>Description</td><td>string</td></tr>
+                <tr><td>Image</td><td>string (rbxassetid)</td></tr><tr><td>YesText</td><td>string</td></tr><tr><td>YesCallback</td><td>function</td></tr>
+                <tr><td>NoText</td><td>string</td></tr><tr><td>NoCallback</td><td>function</td></tr>
+                </tbody></table>
+            </div>
         </div>
     </section>
 
@@ -1124,14 +1072,14 @@ window.Flags.Features:SetValue({"Aimbot", "ESP"})
 window.Flags.GameMode:AddOption("Nightmare")
 window.Flags.GameMode:RemoveOption("Casual")
 </code></pre></div>
-            <p>Dropdown and Checklist also have <code>:AddOption(opt)</code>, <code>:RemoveOption(opt)</code>, <code>:ClearOptions()</code>. Keybind flag will execute its callback whenever the bound key is pressed (unfocused).</p>
+            <p>Dropdown and Checklist also have <code>:AddOption(opt)</code>, <code>:RemoveOption(opt)</code>, <code>:ClearOptions()</code>. Keybind flag will execute its callback whenever the bound key is pressed (unfocused). ColorPicker flag returns Color3 and accepts Color3 in SetValue.</p>
         </div>
     </section>
 
     <section id="themes" class="reveal">
         <div class="section-header"><div class="dot"></div><h2>Theme & Customization</h2></div>
         <div class="card">
-            <p>SynergyUI ships with 4 built‑in themes: <strong>Rise</strong> (default), <strong>Dark</strong>, <strong>Cyberpunk</strong>, <strong>TokyoNight</strong>. Change at runtime:</p>
+            <p>SynergyUI ships with <strong>16 built‑in themes</strong>: Rise, Dark, Cyberpunk, TokyoNight, Red, BloodRed, White, Ubuntu, Glacier, Midnight, Anime, Femboy, Hanki, Ocean, Forest, Sunset. Change at runtime:</p>
             <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre><code class="language-lua">window:SetTheme("Cyberpunk")
 window:SetAccent(Color3.fromRGB(255, 80, 80))</code></pre></div>
             <p>You can also modify the internal <code>window.Theme</code> table before creating controls to change sizes, padding, fonts, etc. The theme includes background, sidebar, element colors, corner radius, and typography.</p>
@@ -1142,17 +1090,17 @@ window:SetAccent(Color3.fromRGB(255, 80, 80))</code></pre></div>
     <section id="config" class="reveal">
         <div class="section-header"><div class="dot"></div><h2>Config File Persistence</h2></div>
         <div class="card">
-            <p>Pass <code>ConfigFile = "path.json"</code> in <code>CreateWindow</code> to automatically save:</p>
+            <p>Pass <code>ConfigName = "my_config"</code> in <code>CreateWindow</code> to automatically save:</p>
             <ul style="margin-left: 20px; margin-bottom: 15px;">
                 <li>All flagged control values (including Color3)</li>
                 <li>Window position and size</li>
                 <li>Minimized state</li>
                 <li>Current theme (if changed via :SetTheme)</li>
             </ul>
-            <p>The file is written using <code>writefile</code> (if supported). The library saves 0.3 seconds after any change, and loads on next launch. No extra code required.</p>
+            <p>The file is written to <code>SynergyUI/Settings/&lt;ConfigName&gt;.json</code> using <code>writefile</code> (if supported). The library saves 0.3 seconds after any change, and loads on next launch. No extra code required.</p>
             <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre><code class="language-lua">local window = SynergyUI:CreateWindow({
     Title = "Persistent UI",
-    ConfigFile = "MyHubConfig.json"
+    ConfigName = "MyHubConfig"
 })</code></pre></div>
         </div>
     </section>
