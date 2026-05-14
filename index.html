@@ -761,49 +761,318 @@ main:CreateSeparator()</code></pre></div></div>
 
 local window = SynergyUI:CreateWindow({
     Title = "SynergyUI • Complete Demo",
-    AccentColor = Color3.fromRGB(138,141,168),
-    IconSet = "lucide",
+    AccentColor = Color3.fromRGB(0, 170, 255),
+    Theme = "Rise",
     ToggleKey = Enum.KeyCode.RightShift,
-    ConfigFile = "demo_config.json"
+    CloseOnEscape = false,
+    ConfigFile = "SynergyUI_Demo_Config.json"
 })
 
-local main = window:CreateTab("Main", "settings")
-local advanced = window:CreateTab("Advanced", "cpu")
-local info = window:CreateTab("Info", "info")
+local mainTab = window:CreateTab("Main", "home")
+local themesTab = window:CreateTab("Themes", "palette")
+local controlsTab = window:CreateTab("Controls", "sliders")
+local infoTab = window:CreateTab("Info", "info")
 
-main:CreateSection("Basic Options")
-main:CreateToggle({Name = "Master Switch", Flag = "Master", CurrentValue = true, Callback = function(v) print("Master", v) end})
-main:CreateSlider({Name = "Volume", Range = {0, 100}, Increment = 5, CurrentValue = 50, Flag = "Volume"})
-main:CreateButton({Name = "Test Notify", Callback = function() SynergyUI:Notify({Message = "Hello from SynergyUI", Type = "done", Duration = 3, Position = "TopRight"}) end})
+mainTab:CreateSection("Basic Options")
 
-main:CreateSection("Selection Controls")
-local dropdown = main:CreateDropdown({Name = "Game Mode", Options = {"Casual", "Competitive", "Hardcore"}, Flag = "GameMode"})
-local checklist = main:CreateChecklist({Name = "Features", Options = {"Aimbot", "ESP", "Speed"}, CurrentSelected = {"ESP"}, Flag = "Features"})
-main:CreateRadioGroup({Name = "Color Theme", Options = {"Red", "Blue", "Green"}, Flag = "ColorTheme"})
-
-advanced:CreateSection("Input & Keybinds")
-advanced:CreateTextInput({Name = "Username", Placeholder = "Enter name", Flag = "username"})
-advanced:CreateNumberInput({Name = "Jump Power", CurrentValue = 50, Flag = "jumpPower"})
-advanced:CreateKeybind({Name = "Trigger Key", CurrentKeybind = "X", Flag = "triggerKey"})
-advanced:CreateColorPicker({Name = "Highlight Color", Color = Color3.fromRGB(255,80,80), Flag = "highlightColor"})
-
-info:CreateSection("About")
-info:CreateParagraph({
-    Title = "SynergyUI Library",
-    Content = "This UI framework supports 15+ controls, flag system, notifications, keybinds and resizable window. All flagged controls can be accessed via window.Flags.",
-    Image = "https://raw.githubusercontent.com/Synergy-Hub-Official/SynergyUI-Lib/main/assets/logo.png"
+local masterToggle = mainTab:CreateToggle({
+    Name = "Master Switch",
+    Flag = "MasterToggle",
+    CurrentValue = true,
+    Callback = function(state)
+        SynergyUI:Notify({
+            Message = "Master Switch: " .. (state and "Enabled" or "Disabled"),
+            Type = state and "done" or "warning",
+            Duration = 2
+        })
+    end
 })
-info:CreateImage({Title = "Preview", Image = "rbxassetid://123456789", Description = "Optional image description"})
-info:CreateButton({Name = "Show All Flags", Callback = function()
-    local msg = "Master: " .. tostring(window.Flags.Master:GetValue()) .. "\nVolume: " .. tostring(window.Flags.Volume:GetValue()) .. "\nMode: " .. window.Flags.GameMode:GetValue()
-    SynergyUI:Notify({Message = msg, Type = "info", Duration = 5})
-end})
 
-advanced:CreateButton({Name = "Set Volume to 80", Callback = function() window.Flags.Volume:SetValue(80) end})
-advanced:CreateButton({Name = "Add Dropdown Option", Callback = function() dropdown:AddOption("Nightmare") end})
-advanced:CreateButton({Name = "Destroy Window", Callback = function() window:Destroy() end})
+local volumeSlider = mainTab:CreateSlider({
+    Name = "Global Volume",
+    Flag = "Volume",
+    Range = {0, 100},
+    Increment = 5,
+    CurrentValue = 65,
+    Callback = function(val) print("Volume changed to: " .. val) end
+})
 
-SynergyUI:Notify({Message = "Demo Ready | Press RightShift to toggle", Type = "info", Duration = 4})</code></pre>
+mainTab:CreateButton({
+    Name = "Test Notification (info)",
+    Tooltip = "Shows an info notification",
+    Callback = function()
+        SynergyUI:Notify({
+            Message = "This is an INFO notification!",
+            Type = "info",
+            Duration = 3,
+            Position = "TopRight"
+        })
+    end
+})
+
+mainTab:CreateButton({
+    Name = "Success Notification",
+    Callback = function()
+        SynergyUI:Notify({
+            Message = "Operation completed successfully.",
+            Type = "done",
+            Duration = 2.5,
+            Position = "BottomRight"
+        })
+    end
+})
+
+mainTab:CreateButton({
+    Name = "Warning Notification",
+    Callback = function()
+        SynergyUI:Notify({
+            Message = "This is an important warning.",
+            Type = "warning",
+            Duration = 3,
+            Position = "TopLeft"
+        })
+    end
+})
+
+mainTab:CreateButton({
+    Name = "Error Notification",
+    Callback = function()
+        SynergyUI:Notify({
+            Message = "An unexpected error occurred.",
+            Type = "error",
+            Duration = 4,
+            Position = "BottomLeft"
+        })
+    end
+})
+
+mainTab:CreateSeparator()
+mainTab:CreateSection("Interactive Controls")
+
+local gameModeDropdown = mainTab:CreateDropdown({
+    Name = "Game Mode",
+    Flag = "GameMode",
+    Options = {"Casual", "Competitive", "Hardcore", "Creative"},
+    CurrentOption = "Competitive",
+    Callback = function(selected)
+        SynergyUI:Notify({Message = "Mode changed to: " .. selected, Type = "info"})
+    end
+})
+
+local featureChecklist = mainTab:CreateChecklist({
+    Name = "Active Features",
+    Flag = "Features",
+    Options = {"Aimbot", "ESP", "Speedhack", "Fly", "NoClip"},
+    CurrentSelected = {"ESP", "Speedhack"},
+    Callback = function(selectedTable)
+        print("Selected features: " .. table.concat(selectedTable, ", "))
+    end
+})
+
+local colorThemeRadio = mainTab:CreateRadioGroup({
+    Name = "UI Color Theme",
+    Flag = "UIColor",
+    Options = {"Blue", "Red", "Green", "Purple"},
+    CurrentValue = "Blue",
+    Callback = function(selected)
+        if selected == "Blue" then
+            window:SetAccent(Color3.fromRGB(0, 170, 255))
+        elseif selected == "Red" then
+            window:SetAccent(Color3.fromRGB(255, 80, 80))
+        elseif selected == "Green" then
+            window:SetAccent(Color3.fromRGB(0, 230, 100))
+        elseif selected == "Purple" then
+            window:SetAccent(Color3.fromRGB(170, 80, 255))
+        end
+    end
+})
+
+themesTab:CreateSection("Visual Theme")
+
+local themeDropdown = themesTab:CreateDropdown({
+    Name = "Global Theme",
+    Flag = "SelectedTheme",
+    Options = {"Rise", "Dark", "Cyberpunk", "TokyoNight"},
+    CurrentOption = "Rise",
+    Callback = function(themeName)
+        window:SetTheme(themeName)
+        SynergyUI:Notify({Message = "Theme changed to: " .. themeName, Type = "done", Duration = 2})
+    end
+})
+
+themesTab:CreateSeparator()
+themesTab:CreateSection("Custom Accent Color")
+
+local accentPicker = themesTab:CreateColorPicker({
+    Name = "Accent Color",
+    Flag = "AccentColor",
+    Color = Color3.fromRGB(0, 170, 255),
+    Callback = function(color) window:SetAccent(color) end
+})
+
+themesTab:CreateButton({
+    Name = "Reset Accent to Default",
+    Tooltip = "Restores the original blue accent",
+    Callback = function()
+        window:SetAccent(Color3.fromRGB(0, 170, 255))
+        if accentPicker.SetValue then
+            accentPicker:SetValue(Color3.fromRGB(0, 170, 255))
+        end
+    end
+})
+
+controlsTab:CreateSection("Text & Number Input")
+
+local textInputDemo = controlsTab:CreateTextInput({
+    Name = "Username",
+    Flag = "Username",
+    Placeholder = "Enter your name...",
+    CurrentText = "SynergyUser",
+    Callback = function(text) print("Username updated: " .. text) end
+})
+
+local numberInputDemo = controlsTab:CreateNumberInput({
+    Name = "Numeric Value",
+    Flag = "NumericValue",
+    CurrentValue = 42,
+    Callback = function(val) print("Current number: " .. val) end
+})
+
+controlsTab:CreateSeparator()
+controlsTab:CreateSection("Keybinds")
+
+local triggerKeybind = controlsTab:CreateKeybind({
+    Name = "Activation Key",
+    Flag = "TriggerKey",
+    CurrentKeybind = "X",
+    Callback = function(key)
+        SynergyUI:Notify({Message = "Key assigned: " .. key, Type = "info", Duration = 1.5})
+    end
+})
+
+controlsTab:CreateSeparator()
+controlsTab:CreateSection("Full Color Picker")
+
+local colorPickerDemo = controlsTab:CreateColorPicker({
+    Name = "Highlight Color",
+    Flag = "HighlightColor",
+    Color = Color3.fromRGB(255, 200, 100),
+    Callback = function(color)
+        print(string.format("Color selected: R=%.2f G=%.2f B=%.2f", color.R, color.G, color.B))
+    end
+})
+
+controlsTab:CreateSeparator()
+controlsTab:CreateSection("Dynamic Dropdown")
+
+local dynamicDropdown = controlsTab:CreateDropdown({
+    Name = "Dynamic List",
+    Flag = "DynamicList",
+    Options = {"Option A", "Option B", "Option C"},
+    MultiSelect = false,
+    Searchable = true,
+    CurrentOption = "Option A",
+    Callback = function(selected)
+        SynergyUI:Notify({Message = "You selected: " .. selected, Type = "info", Duration = 1})
+    end
+})
+
+controlsTab:CreateButton({
+    Name = "Add Option 'New'",
+    Callback = function()
+        dynamicDropdown:AddOption("New_" .. math.random(100, 999))
+    end
+})
+
+controlsTab:CreateButton({
+    Name = "Remove 'Option B'",
+    Callback = function() dynamicDropdown:RemoveOption("Option B") end
+})
+
+controlsTab:CreateButton({
+    Name = "Clear All Options",
+    Callback = function()
+        dynamicDropdown:ClearOptions()
+        dynamicDropdown:AddOption("Reset")
+    end
+})
+
+controlsTab:CreateSeparator()
+controlsTab:CreateSection("Flag Access")
+
+controlsTab:CreateButton({
+    Name = "Show All Flags Status",
+    Callback = function()
+        local msg = "=== CURRENT FLAGS ===\n"
+        msg = msg .. "MasterToggle: " .. tostring(window.Flags.MasterToggle:GetValue()) .. "\n"
+        msg = msg .. "Volume: " .. tostring(window.Flags.Volume:GetValue()) .. "\n"
+        msg = msg .. "GameMode: " .. tostring(window.Flags.GameMode:GetValue()) .. "\n"
+        msg = msg .. "Username: " .. window.Flags.Username:GetValue() .. "\n"
+        msg = msg .. "TriggerKey: " .. window.Flags.TriggerKey:GetValue() .. "\n"
+        msg = msg .. "SelectedTheme: " .. window.Flags.SelectedTheme:GetValue()
+        SynergyUI:Notify({Message = msg, Type = "info", Duration = 5})
+    end
+})
+
+controlsTab:CreateButton({
+    Name = "Set Volume to 100",
+    Callback = function()
+        if window.Flags.Volume then window.Flags.Volume:SetValue(100) end
+    end
+})
+
+controlsTab:CreateButton({
+    Name = "Toggle Master Switch",
+    Callback = function()
+        local current = window.Flags.MasterToggle:GetValue()
+        window.Flags.MasterToggle:SetValue(not current)
+    end
+})
+
+infoTab:CreateSection("About SynergyUI")
+
+infoTab:CreateParagraph({
+    Title = "SynergyUI Library - Full Version",
+    Content = "This library includes: resizable window, draggable header, notification system, 15+ control types, config persistence (flags), predefined themes, customizable accent, keybinds, image support, and much more.\n\nAll flags are automatically saved to the specified ConfigFile. Controls support GetValue/SetValue methods, and some also provide AddOption/RemoveOption.",
+    Image = "https://raw.githubusercontent.com/Synergy-Team-Official/Scripts/main/Synergy-Hub.jpg"
+})
+
+infoTab:CreateImage({
+    Title = "Expandable Image Example",
+    Image = "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y",
+    Description = "Click the title to expand/collapse this image."
+})
+
+infoTab:CreateSeparator()
+infoTab:CreateSection("Utilities")
+
+infoTab:CreateButton({
+    Name = "Reload Rise Theme",
+    Callback = function()
+        window:SetTheme("Rise")
+        themeDropdown:SetValue("Rise")
+    end
+})
+
+infoTab:CreateButton({
+    Name = "Destroy Window",
+    Tooltip = "Completely removes the GUI. Re-run the script to reopen.",
+    Callback = function()
+        window:Destroy()
+        SynergyUI:Notify({Message = "Window destroyed. Reload script to reopen.", Type = "warning", Duration = 4})
+    end
+})
+
+SynergyUI:Notify({
+    Message = "Demo fully loaded | Press RightShift to toggle",
+    Type = "done",
+    Duration = 4,
+    Position = "TopRight"
+})
+
+task.wait(1)
+print("=== SynergyUI Demo Started ===")
+print("Available flags:", window.Flags)</code></pre>
             </div>
         </div>
     </section>
@@ -849,12 +1118,11 @@ SynergyUI:Notify({Message = "Error!", Type = "error", Callback = function() prin
         <div class="section-header"><div class="dot"></div><h2>Programmatic Control (Flags)</h2></div>
         <div class="card">
             <p>Every control with a <code>Flag</code> parameter becomes accessible via <code>window.Flags[FlagName]</code>. You can get/set values and modify options dynamically.</p>
-            <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre><code class="language-lua">window.Flags.Master:SetValue(false)
+            <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre><code class="language-lua">window.Flags.MasterToggle:SetValue(false)
 local volume = window.Flags.Volume:GetValue()
 window.Flags.Features:SetValue({"Aimbot", "ESP"})
 window.Flags.GameMode:AddOption("Nightmare")
 window.Flags.GameMode:RemoveOption("Casual")
-local selectedModes = window.Flags.GameMode:GetValue()  -- returns current selection
 </code></pre></div>
             <p>Dropdown and Checklist also have <code>:AddOption(opt)</code>, <code>:RemoveOption(opt)</code>, <code>:ClearOptions()</code>. Keybind flag will execute its callback whenever the bound key is pressed (unfocused).</p>
         </div>
