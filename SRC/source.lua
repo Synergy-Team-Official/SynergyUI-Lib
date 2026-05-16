@@ -1361,17 +1361,14 @@ function ControlFactory:createNumberInput(options)
     return flagObj, connection
 end
 
--- Helper to convert string to KeyCode (case-insensitive)
 local function stringToKeyCode(str)
     if not str or str == "None" then return nil end
-    -- Try to get the enum by name
     local success, result = pcall(function()
         return Enum.KeyCode[str]
     end)
     if success and result then
         return result
     end
-    -- fallback: try to find by Name property
     for _, v in pairs(Enum.KeyCode:GetEnumItems()) do
         if v.Name:lower() == str:lower() then
             return v
@@ -2706,13 +2703,12 @@ function SynergyUI:CreateWindow(options)
         AllControls = {}
     }
 
-    -- Convert string key to Enum if needed
     if type(window.ToggleKey) == "string" and window.ToggleKey ~= "None" then
         local keyEnum = Enum.KeyCode[window.ToggleKey]
         if keyEnum then
             window.ToggleKey = keyEnum
         else
-            window.ToggleKey = Enum.KeyCode.RightShift -- fallback
+            window.ToggleKey = Enum.KeyCode.RightShift
         end
     elseif window.ToggleKey == "None" then
         window.ToggleKey = nil
@@ -2725,6 +2721,11 @@ function SynergyUI:CreateWindow(options)
     local configHandler = ConfigHandler.new(window.ConfigName)
     window.ConfigHandler = configHandler
     local savedConfig = configHandler:GetAll()
+
+    if savedConfig.__position then
+        savedConfig.__position = nil
+        configHandler:ScheduleSave()
+    end
 
     if savedConfig.__theme and Themes[savedConfig.__theme] then
         window.Theme = Themes[savedConfig.__theme]
@@ -2971,7 +2972,6 @@ function SynergyUI:CreateWindow(options)
         if window.OnClose then pcall(window.OnClose) end
     end))
 
-    -- FIX: Use correct comparison for toggle key (Enum vs Enum)
     addConnection(UserInputService.InputBegan:Connect(function(input, gameProcessed)
         if not gameProcessed and not _anyKeybindBinding and window.ToggleKey and input.KeyCode == window.ToggleKey then
             window.IsVisible = not window.IsVisible
@@ -2990,7 +2990,6 @@ function SynergyUI:CreateWindow(options)
         resizeHandle.Visible = false
     end
 
-    -- Method to change toggle key from string (to be used by keybind control)
     window.SetToggleKey = function(keyName)
         if keyName == "None" then
             window.ToggleKey = nil
@@ -3319,7 +3318,6 @@ function SynergyUI:CreateWindow(options)
         controlFactory.controls = window.Flags
         controlFactory.connections = window.Connections
 
-        -- Override createKeybind to also update the window toggle key if the flag matches "Keybind"
         local originalCreateKeybind = controlFactory.createKeybind
         controlFactory.createKeybind = function(self, opts)
             if opts.Flag == "Keybind" then
